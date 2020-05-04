@@ -82,6 +82,7 @@ import org.wso2.ballerinalang.compiler.tree.BLangVariable;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangDoClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangFromClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangLetClause;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangOnClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangOnConflictClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangSelectClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangWhereClause;
@@ -3259,7 +3260,12 @@ public class TypeChecker extends BLangNodeVisitor {
         for (LetClauseNode letClauseNode : letClauseList) {
             parentEnv = typeCheckLetClause((BLangLetClause) letClauseNode, parentEnv);
         }
+        BLangOnClause onClause = queryExpr.onClause;
+        SymbolEnv onEnv = parentEnv;
         BLangSelectClause selectClause = queryExpr.selectClause;
+        if (onClause != null) {
+            onEnv = typeCheckOnClause(onClause, selectClause, parentEnv);
+        }
         BLangOnConflictClause onConflictClause = queryExpr.onConflictClause;
         if (onConflictClause != null) {
             typeCheckOnConflictClause(onConflictClause, parentEnv);
@@ -3406,6 +3412,17 @@ public class TypeChecker extends BLangNodeVisitor {
                        symTable.booleanType, actualType);
         }
         return typeNarrower.evaluateTruth(whereClause.expression, selectClause, parentEnv);
+    }
+
+    private SymbolEnv typeCheckOnClause(BLangOnClause onClause, BLangSelectClause selectClause,
+                                        SymbolEnv parentEnv) {
+        checkExpr(onClause.expression, parentEnv, symTable.booleanType);
+        BType actualType = onClause.expression.type;
+        if (TypeTags.TUPLE == actualType.tag) {
+            dlog.error(onClause.expression.pos, DiagnosticCode.INCOMPATIBLE_TYPES,
+                    symTable.booleanType, actualType);
+        }
+        return typeNarrower.evaluateTruth(onClause.expression, selectClause, parentEnv);
     }
 
     private void typeCheckOnConflictClause(BLangOnConflictClause onConflictClause, SymbolEnv parentEnv) {

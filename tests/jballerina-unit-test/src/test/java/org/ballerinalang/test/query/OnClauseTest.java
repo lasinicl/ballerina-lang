@@ -45,14 +45,20 @@ public class OnClauseTest {
         BValue[] returnValues = BRunUtil.invoke(result, "testSimpleOnClause");
         Assert.assertNotNull(returnValues);
 
-        Assert.assertEquals(returnValues.length, 3, "Expected events are not received");
+        Assert.assertEquals(returnValues.length, 6, "Expected events are not received");
 
-        BMap<String, BValue> person1 = (BMap<String, BValue>) returnValues[0];
-        BMap<String, BValue> person2 = (BMap<String, BValue>) returnValues[1];
-        BMap<String, BValue> person3 = (BMap<String, BValue>) returnValues[2];
+        BMap person1 = (BMap) returnValues[0];
+        BMap person2 = (BMap) returnValues[1];
+        BMap person3 = (BMap) returnValues[2];
+        BMap person4 = (BMap) returnValues[3];
+        BMap person5 = (BMap) returnValues[4];
+        BMap person6 = (BMap) returnValues[5];
 
-        Assert.assertEquals(person1.get("firstName").stringValue(), "Alex");
-        Assert.assertEquals(person2.get("lastName").stringValue(), "Fonseka");
-        Assert.assertEquals(((BInteger) person3.get("age")).intValue(), 33);
+        Assert.assertEquals(person1.stringValue(), "{firstName:\"Alex\", lastName:\"George\", age:23, deptId:1}");
+        Assert.assertEquals(person2.stringValue(), "{firstName:\"Alex\", lastName:\"George\", age:23, deptId:1}");
+        Assert.assertEquals(person3.stringValue(), "{firstName:\"Ranjan\", lastName:\"Fonseka\", age:30, deptId:2}");
+        Assert.assertEquals(person4.stringValue(), "{firstName:\"Ranjan\", lastName:\"Fonseka\", age:30, deptId:2}");
+        Assert.assertEquals(person5.stringValue(), "{firstName:\"John\", lastName:\"David\", age:33, deptId:1}");
+        Assert.assertEquals(person6.stringValue(), "{firstName:\"John\", lastName:\"David\", age:33, deptId:1}");
     }
 }

@@ -78,6 +78,8 @@ import org.wso2.ballerinalang.compiler.tree.BLangWorker;
 import org.wso2.ballerinalang.compiler.tree.BLangXMLNS;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangDoClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangFromClause;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangOnClause;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangOnConflictClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangSelectClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangWhereClause;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangAnnotAccessExpr;
@@ -2506,7 +2508,9 @@ public class CodeAnalyzer extends BLangNodeVisitor {
             analyzeNode((BLangWhereClause) whereClauseNode, env);
         }
 
+        analyzeNode(queryExpr.onClause, env);
         analyzeNode(queryExpr.selectClause, env);
+        analyzeNode(queryExpr.onConflictClause, env);
     }
 
     @Override
@@ -2542,8 +2546,18 @@ public class CodeAnalyzer extends BLangNodeVisitor {
     }
 
     @Override
+    public void visit(BLangOnClause onClause) {
+        analyzeExpr(onClause.expression);
+    }
+
+    @Override
     public void visit(BLangSelectClause selectClause) {
         analyzeExpr(selectClause.expression);
+    }
+
+    @Override
+    public void visit(BLangOnConflictClause onConflictClause) {
+        analyzeExpr(onConflictClause.expression);
     }
 
     @Override
