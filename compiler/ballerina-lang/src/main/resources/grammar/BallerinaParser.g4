@@ -909,8 +909,16 @@ letClause
     :   LET letVarDecl (COMMA letVarDecl)*
     ;
 
+nullableBindingPattern
+    :   VAR bindingPattern
+    ;
+
 joinOnCondition
     :   onClause JOIN_EQUALS expression
+    ;
+
+outerJoinClause
+    :   OUTER JOIN nullableBindingPattern IN expression joinOnCondition
     ;
 
 joinClause
@@ -926,7 +934,7 @@ doClause
     ;
 
 queryPipeline
-    :   fromClause ((fromClause | letClause | whereClause )* | joinClause?)
+    :   fromClause ((fromClause | letClause | whereClause )* | joinClause? | outerJoinClause?)
     ;
 
 queryConstructType
