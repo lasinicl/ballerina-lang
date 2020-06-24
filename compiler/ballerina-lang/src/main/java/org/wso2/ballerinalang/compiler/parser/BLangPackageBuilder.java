@@ -94,6 +94,8 @@ import org.wso2.ballerinalang.compiler.tree.clauses.BLangLetClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangLimitClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangOnClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangOnConflictClause;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangOrderByClause;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangOrderKeyClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangSelectClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangWhereClause;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangAccessExpression;
@@ -258,6 +260,8 @@ public class BLangPackageBuilder {
     private Stack<List<BLangVariable>> varListStack = new Stack<>();
 
     private Stack<List<BLangLetVariable>> letVarListStack = new Stack<>();
+
+    private Stack<BLangOrderKeyClause> orderKeyListStack = new Stack<>();
 
     private Stack<List<BLangRecordVariableKeyValue>> recordVarListStack = new Stack<>();
 
@@ -2094,6 +2098,26 @@ public class BLangPackageBuilder {
         queryClauseStack.push(onClause);
 
         isInOnCondition = false;
+    }
+
+    void createOrderByKeyList(DiagnosticPos pos, Set<Whitespace> ws, boolean isAscending, boolean isDescending) {
+        BLangOrderKeyClause orderKeyClause = (BLangOrderKeyClause) TreeBuilder.createOrderKeyNode();
+        orderKeyClause.addWS(ws);
+        orderKeyClause.pos = pos;
+        orderKeyClause.setOrderKey(this.exprNodeStack.pop());
+        orderKeyClause.setOrderDirection(isAscending, isDescending);
+        orderKeyListStack.push(orderKeyClause);
+    }
+
+    void createOrderByClause(DiagnosticPos pos, Set<Whitespace> ws) {
+        BLangOrderByClause orderByClause = (BLangOrderByClause) TreeBuilder.createOrderByClauseNode();
+        orderByClause.addWS(ws);
+        orderByClause.pos = pos;
+        Collections.reverse(orderKeyListStack);
+        while (!this.orderKeyListStack.empty()) {
+            orderByClause.addOrderKey(this.orderKeyListStack.pop());
+        }
+        queryClauseStack.push(orderByClause);
     }
 
     void createSelectClause(DiagnosticPos pos, Set<Whitespace> ws) {

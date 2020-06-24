@@ -2922,6 +2922,34 @@ public class BLangParserListener extends BallerinaParserBaseListener {
     }
 
     @Override
+    public void exitOrderKey(BallerinaParser.OrderKeyContext ctx) {
+        if (isInErrorState) {
+            return;
+        }
+
+        boolean isAscending = false;
+        boolean isDescending = false;
+        if (ctx.orderDirection() != null) {
+            if (ctx.orderDirection().ASCENDING() != null) {
+                isAscending = true;
+            } else {
+                isDescending = true;
+            }
+        }
+
+        this.pkgBuilder.createOrderByKeyList(getCurrentPos(ctx), getWS(ctx), isAscending, isDescending);
+    }
+
+    @Override
+    public void exitOrderByClause(BallerinaParser.OrderByClauseContext ctx) {
+        if (isInErrorState) {
+            return;
+        }
+
+        this.pkgBuilder.createOrderByClause(getCurrentPos(ctx), getWS(ctx));
+    }
+
+    @Override
     public void exitSelectClause(BallerinaParser.SelectClauseContext ctx) {
         if (isInErrorState) {
             return;

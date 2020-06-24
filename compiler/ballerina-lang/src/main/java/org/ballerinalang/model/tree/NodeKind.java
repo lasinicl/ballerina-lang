@@ -181,6 +181,8 @@ public enum NodeKind {
     ON_CONFLICT,
     ON,
     LIMIT,
+    ORDER_KEY,
+    ORDER_BY,
 
     /* Types */
     ARRAY_TYPE,

@@ -62,6 +62,8 @@ import org.wso2.ballerinalang.compiler.tree.clauses.BLangLetClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangLimitClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangOnClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangOnConflictClause;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangOrderByClause;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangOrderKeyClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangSelectClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangWhereClause;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangAccessExpression;
@@ -1382,6 +1384,23 @@ public class NodeCloner extends BLangNodeVisitor {
         BLangOnClause clone = new BLangOnClause();
         source.cloneRef = clone;
         clone.expression = clone(source.expression);
+    }
+
+    @Override
+    public void visit(BLangOrderKeyClause source) {
+
+        BLangOrderKeyClause clone = new BLangOrderKeyClause();
+        source.cloneRef = clone;
+        clone.expression = clone(source.expression);
+        clone.orderDirection = source.orderDirection;
+    }
+
+    @Override
+    public void visit(BLangOrderByClause source) {
+
+        BLangOrderByClause clone = new BLangOrderByClause();
+        source.cloneRef = clone;
+        clone.orderByKeyList = cloneList(source.orderByKeyList);
     }
 
     @Override
