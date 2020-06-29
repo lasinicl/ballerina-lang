@@ -47,6 +47,10 @@ public function createFilterFunction(function(_Frame _frame) returns boolean fil
     return new _FilterFunction(filterFunc);
 }
 
+public function createOrderByFunction(anydata[] orderKeyArray, string[] orderDirectionArray) returns _StreamFunction {
+    return new _OrderByFunction(orderKeyArray, orderDirectionArray);
+}
+
 public function createSelectFunction(function(_Frame _frame) returns _Frame|error? selectFunc)
         returns _StreamFunction {
     return new _SelectFunction(selectFunc);

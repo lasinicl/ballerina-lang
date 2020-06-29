@@ -21,6 +21,7 @@ import ballerina/lang.'string as lang_string;
 import ballerina/lang.'xml as lang_xml;
 import ballerina/lang.'stream as lang_stream;
 import ballerina/lang.'table as lang_table;
+//import ballerina/io;
 
 # A type parameter that is a subtype of `any|error`.
 # Has the special semantic that when used in a declaration
@@ -363,6 +364,8 @@ public type _JoinFunction object {
 
 public type _FilterFunction object {
     *_StreamFunction;
+    public _Frame[] frameList;
+    //public int count = 0;
 
     # Desugared function to do;
     # i.e
@@ -374,16 +377,66 @@ public type _FilterFunction object {
     public function init(function(_Frame _frame) returns boolean filterFunc) {
         self.filterFunc = filterFunc;
         self.prevFunc = ();
+        self.frameList = [];
     }
 
     public function process() returns _Frame|error? {
         _StreamFunction pf = <_StreamFunction> self.prevFunc;
         function(_Frame _frame) returns boolean filterFunc = self.filterFunc;
         _Frame|error? pFrame = pf.process();
+        print(pFrame);
         while (pFrame is _Frame && !filterFunc(pFrame)) {
+            //frameList[count] = <_Frame>pFrame;
+            //print(frameList);
             pFrame = pf.process();
         }
+        //print("End of filter");
+        //print(frameList);
         return pFrame;
+    }
+
+    public function reset() {
+        _StreamFunction? pf = self.prevFunc;
+        if (pf is _StreamFunction) {
+            pf.reset();
+        }
+    }
+};
+
+public type _OrderByFunction object {
+    *_StreamFunction;
+    public Type[] orderedList;
+    public anydata[] orderKeyArray;
+    public string[] orderDirectionArray;
+    //public _Frame[] frameList;
+    //public int count = 0;
+
+    # Desugared function to do;
+    # order by person.id ascending or
+    # order by person.id descending
+    //public function(anydata[] orderKeyArray, string[] orderDirectionArray);
+
+    public function init(anydata[] orderKeyArray, string[] orderDirectionArray) {
+        self.prevFunc = ();
+        self.orderedList = [];
+        self.orderKeyArray = orderKeyArray;
+        self.orderDirectionArray = orderDirectionArray;
+        //self.frameList = [];
+    }
+
+    public function process() returns _Frame|error? {
+        _StreamFunction pf = <_StreamFunction> self.prevFunc;
+        _Frame|error? pFrame = pf.process();
+        while (pFrame is _Frame) {
+            //print(pFrame);
+            //frameList[count] = pFrame;
+
+        }
+        //while (pFrame is _Frame) {
+           // to do
+           //print(pFrame);
+        //}
+        return ();
     }
 
     public function reset() {
@@ -496,4 +549,9 @@ public type _LimitFunction object {
             pf.reset();
         }
     }
+};
+
+public type MergeSort object {
+
+
 };
