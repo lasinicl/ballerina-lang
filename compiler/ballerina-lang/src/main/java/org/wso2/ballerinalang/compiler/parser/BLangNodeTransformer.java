@@ -1665,22 +1665,7 @@ public class BLangNodeTransformer extends NodeTransformer<BLangNode> {
         SyntaxKind operatorKind = unaryExprNode.unaryOperator().kind();
         if (expressionKind == SyntaxKind.DECIMAL_INTEGER_LITERAL ||
                 expressionKind == SyntaxKind.DECIMAL_FLOATING_POINT_LITERAL) {
-            BLangNumericLiteral numericLiteral = (BLangNumericLiteral) createSimpleLiteral(unaryExprNode.expression());
-            if (operatorKind == SyntaxKind.MINUS_TOKEN) {
-                if (numericLiteral.value instanceof String) {
-                    numericLiteral.value = "-" + numericLiteral.value;
-                } else {
-                    numericLiteral.value = ((Long) numericLiteral.value) * -1;
-                }
-
-                if (expressionKind != SyntaxKind.DECIMAL_FLOATING_POINT_LITERAL) {
-                    numericLiteral.originalValue = "-" + numericLiteral.originalValue;
-                }
-            } else if (operatorKind == SyntaxKind.PLUS_TOKEN) {
-                if (expressionKind != SyntaxKind.DECIMAL_FLOATING_POINT_LITERAL) {
-                    numericLiteral.originalValue = "+" + numericLiteral.originalValue;
-                }
-            }
+            BLangNumericLiteral numericLiteral = (BLangNumericLiteral) createSimpleLiteral(unaryExprNode);
             return numericLiteral;
         }
         OperatorKind operator = OperatorKind.valueFrom(unaryExprNode.unaryOperator().text());
@@ -3102,7 +3087,7 @@ public class BLangNodeTransformer extends NodeTransformer<BLangNode> {
             literal = createSimpleLiteral(member.identifier());
             deepLiteral = createSimpleLiteral(member.identifier());
         }
-        if (literal.originalValue != "") {
+        if (literal.originalValue != "" || member.identifier().isMissing()) {
             bLangConstant.setInitialExpression(literal);
         } else {
             bLangConstant.setInitialExpression(createExpression(member.constExprNode()));
@@ -3151,8 +3136,9 @@ public class BLangNodeTransformer extends NodeTransformer<BLangNode> {
         boolean isTable = false;
         boolean isStream = false;
 
-        QueryConstructTypeNode queryConstructTypeNode = queryExprNode.queryConstructType();
-        if (queryConstructTypeNode != null) {
+        Optional<QueryConstructTypeNode> optionalQueryConstructTypeNode = queryExprNode.queryConstructType();
+        if (optionalQueryConstructTypeNode.isPresent()) {
+            QueryConstructTypeNode queryConstructTypeNode = optionalQueryConstructTypeNode.get();
             isTable = queryConstructTypeNode.keyword().kind() == SyntaxKind.TABLE_KEYWORD;
             isStream = queryConstructTypeNode.keyword().kind() == SyntaxKind.STREAM_KEYWORD;
             if (queryConstructTypeNode.keySpecifier().isPresent()) {
