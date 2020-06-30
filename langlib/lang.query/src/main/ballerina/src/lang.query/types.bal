@@ -21,6 +21,7 @@ import ballerina/lang.'string as lang_string;
 import ballerina/lang.'xml as lang_xml;
 import ballerina/lang.'stream as lang_stream;
 import ballerina/lang.'table as lang_table;
+import ballerina/lang.'string as strings;
 //import ballerina/io;
 
 # A type parameter that is a subtype of `any|error`.
@@ -384,14 +385,9 @@ public type _FilterFunction object {
         _StreamFunction pf = <_StreamFunction> self.prevFunc;
         function(_Frame _frame) returns boolean filterFunc = self.filterFunc;
         _Frame|error? pFrame = pf.process();
-        print(pFrame);
         while (pFrame is _Frame && !filterFunc(pFrame)) {
-            //frameList[count] = <_Frame>pFrame;
-            //print(frameList);
             pFrame = pf.process();
         }
-        //print("End of filter");
-        //print(frameList);
         return pFrame;
     }
 
@@ -551,7 +547,41 @@ public type _LimitFunction object {
     }
 };
 
-public type MergeSort object {
-
-
-};
+//public type OrderBy object {
+//    public function stringSort(string st1, string st2) returns int {
+//        return strings:codePointCompare(st1, st2);
+//    }
+//
+//    public function numberSort(int|float val1, int|float val2) returns int {
+//        if (val1 is int) {
+//            if (val2 is int) {
+//                return val1 - val2;
+//            } else {
+//                return <float>val1 < val2 ? -1 : <float>val1 == val2 ? 0 : 1;
+//            }
+//        } else {
+//            if (y is int) {
+//                return val1 < (<float>val2) ? -1 : val1 == <float>val2 ? 0 : 1;
+//            }
+//            else {
+//                return val1 < val2 ? -1 : val1 == val2 ? 0 : 1;
+//            }
+//        }
+//    }
+//
+//    public function booleanSort(boolean b1, boolean b2) return int {
+//        if (b1 == true) {
+//            if (b2 == false) {
+//                return 1;
+//            } else {
+//                return 0;
+//            }
+//        } else {
+//            if (b2 == true) {
+//                return -1;
+//            } else {
+//                return 0;
+//            }
+//        }
+//    }
+//};

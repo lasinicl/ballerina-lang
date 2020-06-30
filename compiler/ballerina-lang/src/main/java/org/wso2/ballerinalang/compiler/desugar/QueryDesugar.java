@@ -338,9 +338,7 @@ public class QueryDesugar extends BLangNodeVisitor {
                     break;
                 case ORDER_BY:
                     BLangVariableReference orderByFunc = addOrderByFunction(block, (BLangOrderByClause) clause);
-                    System.out.println(orderByFunc);
                     addStreamFunction(block, initPipeline, orderByFunc);
-                    System.out.println("After orderby");
                     break;
                 case SELECT:
                     BLangVariableReference selectFunc = addSelectFunction(block, (BLangSelectClause) clause);
@@ -590,11 +588,9 @@ public class QueryDesugar extends BLangNodeVisitor {
                     orderDirection);
             orderDirectionArray.exprs.add(orderDirectionLiteral);
         }
-        System.out.println("inside orderby");
 
         return getStreamFunctionVariableRef(blockStmt, QUERY_CREATE_ORDER_BY_FUNCTION, Lists.of(orderKeyArray,
                 orderDirectionArray), pos);
-
     }
 
     /**
