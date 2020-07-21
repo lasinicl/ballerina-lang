@@ -100,6 +100,8 @@ public class LexerTerminals {
     public static final String JOIN = "join";
     public static final String OUTER = "outer";
     public static final String EQUALS = "equals";
+    public static final String GROUP = "group";
+    public static final String BY = "by";
 
     // For BFM only
     public static final String VARIABLE = "variable";

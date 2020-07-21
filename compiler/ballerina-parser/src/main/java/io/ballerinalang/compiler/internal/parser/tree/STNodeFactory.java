@@ -2152,6 +2152,37 @@ public class STNodeFactory extends STAbstractNodeFactory {
                 expression);
     }
 
+    public static STNode createGroupByClauseNode(
+            STNode groupKeyword,
+            STNode byKeyword,
+            STNode groupingKey) {
+
+        return new STGroupByClauseNode(
+                groupKeyword,
+                byKeyword,
+                groupingKey);
+    }
+
+    public static STNode createGroupingKeyVariableNode(
+            STNode variableName) {
+
+        return new STGroupingKeyVariableNode(
+                variableName);
+    }
+
+    public static STNode createGroupingKeyStatementNode(
+            STNode typeDescriptor,
+            STNode variableName,
+            STNode equalToken,
+            STNode expression) {
+
+        return new STGroupingKeyStatementNode(
+                typeDescriptor,
+                variableName,
+                equalToken,
+                expression);
+    }
+
     public static STNode createListMatchPatternNode(
             STNode openBracket,
             STNode matchPatterns,

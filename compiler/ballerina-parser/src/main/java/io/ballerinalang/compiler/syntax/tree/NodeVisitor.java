@@ -759,6 +759,18 @@ public abstract class NodeVisitor {
         visitSyntaxNode(onClauseNode);
     }
 
+    public void visit(GroupByClauseNode groupByClauseNode) {
+        visitSyntaxNode(groupByClauseNode);
+    }
+
+    public void visit(GroupingKeyVariableNode groupingKeyVariableNode) {
+        visitSyntaxNode(groupingKeyVariableNode);
+    }
+
+    public void visit(GroupingKeyStatementNode groupingKeyStatementNode) {
+        visitSyntaxNode(groupingKeyStatementNode);
+    }
+
     public void visit(ListMatchPatternNode listMatchPatternNode) {
         visitSyntaxNode(listMatchPatternNode);
     }

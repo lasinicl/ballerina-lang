@@ -242,7 +242,10 @@ public enum ParserRuleContext {
     ARG_MATCH_PATTERN("arg-match-pattern"),
     ARG_MATCH_PATTERN_RHS("arg-match-pattern-rhs"),
     ARG_BINDING_PATTERN_START_IDENT("arg-binding-pattern-start-ident"),
-
+    GROUP_BY_CLAUSE("group-by-clause"),
+    GROUPING_KEY("grouping-key"),
+    GROUPING_KEY_VARIABLE("grouping-key-variable"),
+    GROUPING_KEY_STATEMENT("grouping-key-statement"),
 
     // Statements
     STATEMENT("statement"),
@@ -357,6 +360,8 @@ public enum ParserRuleContext {
     OUTER_KEYWORD("outer"),
     VAR_KEYWORD("var"),
     FAIL_KEYWORD("fail"),
+    GROUP_KEYWORD("group"),
+    BY_KEYWORD("by"),
 
     // Syntax tokens
     OPEN_PARENTHESIS("("),

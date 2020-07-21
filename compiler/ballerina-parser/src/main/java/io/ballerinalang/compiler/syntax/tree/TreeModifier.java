@@ -2918,6 +2918,48 @@ public abstract class TreeModifier extends NodeTransformer<Node> {
     }
 
     @Override
+    public GroupByClauseNode transform(
+            GroupByClauseNode groupByClauseNode) {
+        Token groupKeyword =
+                modifyToken(groupByClauseNode.groupKeyword());
+        Token byKeyword =
+                modifyToken(groupByClauseNode.byKeyword());
+        SeparatedNodeList<GroupingKeyNode> groupingKey =
+                modifySeparatedNodeList(groupByClauseNode.groupingKey());
+        return groupByClauseNode.modify(
+                groupKeyword,
+                byKeyword,
+                groupingKey);
+    }
+
+    @Override
+    public GroupingKeyVariableNode transform(
+            GroupingKeyVariableNode groupingKeyVariableNode) {
+        IdentifierToken variableName =
+                modifyNode(groupingKeyVariableNode.variableName());
+        return groupingKeyVariableNode.modify(
+                variableName);
+    }
+
+    @Override
+    public GroupingKeyStatementNode transform(
+            GroupingKeyStatementNode groupingKeyStatementNode) {
+        TypeDescriptorNode typeDescriptor =
+                modifyNode(groupingKeyStatementNode.typeDescriptor());
+        IdentifierToken variableName =
+                modifyNode(groupingKeyStatementNode.variableName());
+        Token equalToken =
+                modifyToken(groupingKeyStatementNode.equalToken());
+        ExpressionNode expression =
+                modifyNode(groupingKeyStatementNode.expression());
+        return groupingKeyStatementNode.modify(
+                typeDescriptor,
+                variableName,
+                equalToken,
+                expression);
+    }
+
+    @Override
     public ListMatchPatternNode transform(
             ListMatchPatternNode listMatchPatternNode) {
         Token openBracket =

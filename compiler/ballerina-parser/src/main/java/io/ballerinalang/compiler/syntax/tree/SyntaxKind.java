@@ -121,6 +121,9 @@ public enum SyntaxKind {
     READONLY_KEYWORD(268, "readonly"),
     DISTINCT_KEYWORD(269, "distinct"),
     FAIL_KEYWORD(270, "fail"),
+    GROUP_KEYWORD(271, "group"),
+    BY_KEYWORD(272, "by"),
+    ORDER_KEYWORD(273, "order"),
 
     // Separators
     OPEN_BRACE_TOKEN(500, "{"),
@@ -427,6 +430,10 @@ public enum SyntaxKind {
     NAMED_ARG_MATCH_PATTERN(3078),
     FUNCTIONAL_BINDING_PATTERN(3079),
     NAMED_ARG_BINDING_PATTERN(3080),
+    ORDER_BY_CLAUSE(3081),
+    GROUP_BY_CLAUSE(3083),
+    GROUPING_KEY_VARIABLE(3084),
+    GROUPING_KEY_STATEMENT(3085),
 
     // XML
     XML_ELEMENT(4000),

@@ -70,6 +70,10 @@ import io.ballerinalang.compiler.syntax.tree.FunctionCallExpressionNode;
 import io.ballerinalang.compiler.syntax.tree.FunctionDefinitionNode;
 import io.ballerinalang.compiler.syntax.tree.FunctionSignatureNode;
 import io.ballerinalang.compiler.syntax.tree.FunctionTypeDescriptorNode;
+import io.ballerinalang.compiler.syntax.tree.GroupByClauseNode;
+import io.ballerinalang.compiler.syntax.tree.GroupingKeyNode;
+import io.ballerinalang.compiler.syntax.tree.GroupingKeyStatementNode;
+import io.ballerinalang.compiler.syntax.tree.GroupingKeyVariableNode;
 import io.ballerinalang.compiler.syntax.tree.IdentifierToken;
 import io.ballerinalang.compiler.syntax.tree.IfElseStatementNode;
 import io.ballerinalang.compiler.syntax.tree.ImplicitAnonymousFunctionExpressionNode;
@@ -257,6 +261,9 @@ import org.wso2.ballerinalang.compiler.tree.BLangVariable;
 import org.wso2.ballerinalang.compiler.tree.BLangXMLNS;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangDoClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangFromClause;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupByClause;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupingKeyStatement;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupingKeyVariable;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangJoinClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangLetClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangLimitClause;
@@ -3282,6 +3289,39 @@ public class BLangNodeTransformer extends NodeTransformer<BLangNode> {
             joinClause.onClause = onClause;
         }
         return joinClause;
+    }
+
+    @Override
+    public BLangNode transform(GroupByClauseNode groupByClauseNode) {
+        BLangGroupByClause groupByClause = (BLangGroupByClause) TreeBuilder.createGroupByClauseNode();
+        groupByClause.pos = getPosition(groupByClauseNode);
+        for (GroupingKeyNode groupingKeyNode : groupByClauseNode.groupingKey()) {
+            if (groupingKeyNode.kind() == SyntaxKind.GROUPING_KEY_VARIABLE) {
+                groupByClause.addGroupingKey(createGroupingKeyVariable((GroupingKeyVariableNode) groupingKeyNode));
+            } else {
+                groupByClause.addGroupingKey(createGroupingKeyStatement((GroupingKeyStatementNode) groupingKeyNode));
+            }
+        }
+        return groupByClause;
+    }
+
+    public BLangGroupingKeyVariable createGroupingKeyVariable(GroupingKeyVariableNode groupingKeyVariableNode) {
+        BLangGroupingKeyVariable groupingKey = (BLangGroupingKeyVariable) TreeBuilder.createGroupingKeyVariableNode();
+        groupingKey.pos = getPosition(groupingKeyVariableNode);
+        groupingKey.variableNameIdentifier =
+                createIdentifier(groupingKey.pos, groupingKeyVariableNode.variableName());
+        return groupingKey;
+    }
+
+    public BLangGroupingKeyStatement createGroupingKeyStatement(GroupingKeyStatementNode groupingKeyStatementNode) {
+        BLangGroupingKeyStatement groupingKey =
+                (BLangGroupingKeyStatement) TreeBuilder.createGroupingKeyStatementNode();
+        groupingKey.pos = getPosition(groupingKeyStatementNode);
+        groupingKey.isDeclaredWithVar = groupingKeyStatementNode.typeDescriptor().kind() == SyntaxKind.VAR_TYPE_DESC;
+        groupingKey.variableNameIdentifier =
+                createIdentifier(groupingKeyStatementNode.variableName());
+        groupingKey.expression = createExpression(groupingKeyStatementNode.expression());
+        return groupingKey;
     }
 
     @Override

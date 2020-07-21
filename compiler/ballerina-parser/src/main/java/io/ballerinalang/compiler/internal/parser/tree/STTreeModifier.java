@@ -2315,6 +2315,40 @@ public abstract class STTreeModifier extends STNodeTransformer<STNode> {
     }
 
     @Override
+    public STGroupByClauseNode transform(
+            STGroupByClauseNode groupByClauseNode) {
+        STNode groupKeyword = modifyNode(groupByClauseNode.groupKeyword);
+        STNode byKeyword = modifyNode(groupByClauseNode.byKeyword);
+        STNode groupingKey = modifyNode(groupByClauseNode.groupingKey);
+        return groupByClauseNode.modify(
+                groupKeyword,
+                byKeyword,
+                groupingKey);
+    }
+
+    @Override
+    public STGroupingKeyVariableNode transform(
+            STGroupingKeyVariableNode groupingKeyVariableNode) {
+        STNode variableName = modifyNode(groupingKeyVariableNode.variableName);
+        return groupingKeyVariableNode.modify(
+                variableName);
+    }
+
+    @Override
+    public STGroupingKeyStatementNode transform(
+            STGroupingKeyStatementNode groupingKeyStatementNode) {
+        STNode typeDescriptor = modifyNode(groupingKeyStatementNode.typeDescriptor);
+        STNode variableName = modifyNode(groupingKeyStatementNode.variableName);
+        STNode equalToken = modifyNode(groupingKeyStatementNode.equalToken);
+        STNode expression = modifyNode(groupingKeyStatementNode.expression);
+        return groupingKeyStatementNode.modify(
+                typeDescriptor,
+                variableName,
+                equalToken,
+                expression);
+    }
+
+    @Override
     public STListMatchPatternNode transform(
             STListMatchPatternNode listMatchPatternNode) {
         STNode openBracket = modifyNode(listMatchPatternNode.openBracket);

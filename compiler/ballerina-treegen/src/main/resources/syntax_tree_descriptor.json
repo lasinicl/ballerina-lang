@@ -3881,6 +3881,66 @@
             ]
         },
         {
+            "name": "GroupByClauseNode",
+            "base": "ClauseNode",
+            "kind": "GROUP_BY_CLAUSE",
+            "attributes": [
+                {
+                    "name": "groupKeyword",
+                    "type": "Token"
+                },
+                {
+                    "name": "byKeyword",
+                    "type": "Token"
+                },
+                {
+                    "name": "groupingKey",
+                    "type": "GroupingKeyNode",
+                    "occurrences": "MULTIPLE_SEPARATED"
+                }
+            ]
+        },
+        {
+            "name": "GroupingKeyNode",
+            "base": "Node",
+            "isAbstract": true
+        },
+        {
+            "name": "GroupingKeyVariableNode",
+            "base": "GroupingKeyNode",
+            "kind": "GROUPING_KEY_VARIABLE",
+            "attributes": [
+                {
+                    "name": "variableName",
+                    "type": "IdentifierToken"
+                }
+            ]
+        },
+        {
+            "name": "GroupingKeyStatementNode",
+            "base": "GroupingKeyNode",
+            "kind": "GROUPING_KEY_STATEMENT",
+            "attributes": [
+                {
+                    "name": "typeDescriptor",
+                    "type": "TypeDescriptorNode"
+
+                },
+                {
+                    "name": "variableName",
+                    "type": "IdentifierToken"
+                },
+                {
+                    "name": "equalToken",
+                    "type": "Token"
+                },
+                {
+                    "name": "expression",
+                    "type": "ExpressionNode"
+                }
+            ]
+        },
+        {
             "name": "ListMatchPatternNode",
             "base": "Node",
             "kind": "LIST_MATCH_PATTERN",

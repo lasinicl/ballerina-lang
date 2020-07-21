@@ -4878,6 +4878,8 @@ public class BallerinaParser extends AbstractParser {
             case LIMIT_KEYWORD:
             case JOIN_KEYWORD:
             case OUTER_KEYWORD:
+            case GROUP_KEYWORD:
+            case BY_KEYWORD:
                 return true;
             case RIGHT_DOUBLE_ARROW_TOKEN:
                 return isInMatchGuard;
@@ -10129,6 +10131,9 @@ public class BallerinaParser extends AbstractParser {
             case JOIN_KEYWORD:
             case OUTER_KEYWORD:
                 return parseJoinClause(isRhsExpr);
+            case GROUP_KEYWORD:
+            case BY_KEYWORD:
+                return parseGroupByClause(isRhsExpr);
             case DO_KEYWORD:
             case SEMICOLON_TOKEN:
             case ON_KEYWORD:
@@ -10285,6 +10290,141 @@ public class BallerinaParser extends AbstractParser {
                 DiagnosticErrorCode.ERROR_MISSING_LET_VARIABLE_DECLARATION);
 
         return STNodeFactory.createLetClauseNode(letKeyword, letVarDeclarations);
+    }
+
+    /**
+     * Parse group-keyword.
+     *
+     * @return Group-keyword node
+     */
+    private STNode parseGroupKeyword() {
+        STToken token = peek();
+        if (token.kind == SyntaxKind.GROUP_KEYWORD) {
+            return consume();
+        } else {
+            Solution sol = recover(token, ParserRuleContext.GROUP_KEYWORD);
+            return sol.recoveredNode;
+        }
+    }
+
+    /**
+     * Parse by-keyword.
+     *
+     * @return By-keyword node
+     */
+    private STNode parseByKeyword() {
+        STToken token = peek();
+        if (token.kind == SyntaxKind.BY_KEYWORD) {
+            return consume();
+        } else {
+            Solution sol = recover(token, ParserRuleContext.BY_KEYWORD);
+            return sol.recoveredNode;
+        }
+    }
+
+    /**
+     * Parse group by clause.
+     * <p>
+     * <code>group-by-clause := group by grouping-key [, grouping-key]* </code>
+     *
+     * @return Parsed node
+     */
+    private STNode parseGroupByClause(boolean isRhsExpr) {
+        STToken nextToken = peek();
+        if (nextToken.kind != SyntaxKind.GROUP_KEYWORD) {
+            return STNodeFactory.createEmptyNode();
+        }
+        STNode groupKeyword = parseGroupKeyword();
+        STNode byKeyword = parseByKeyword();
+        STNode groupingKeys = parseGroupingKeyList(ParserRuleContext.GROUPING_KEY, isRhsExpr);
+
+        byKeyword = cloneWithDiagnosticIfListEmpty(groupingKeys, byKeyword,
+                DiagnosticErrorCode.ERROR_MISSING_GROUPING_KEY);
+
+        return STNodeFactory.createGroupByClauseNode(groupKeyword, byKeyword, groupingKeys);
+    }
+
+    /**
+     * Parse grouping key.
+     * <p>
+     * <code>grouping-key-list := grouping-key [, grouping-key]* </code>
+     *
+     * @return Parsed node
+     */
+    private STNode parseGroupingKeyList(ParserRuleContext context, boolean isRhsExpr) {
+        startContext(context);
+        List<STNode> groupingKeys = new ArrayList<>();
+        STToken nextToken = peek();
+
+        // Make sure at least one grouping key is present
+        if (isEndOfOrderByOrGroupingKeys(nextToken.kind)) {
+            endContext();
+            return STNodeFactory.createEmptyNodeList();
+        }
+
+        // Parse first grouping key, that has no leading comma
+        STNode groupingKey = parseGroupingKey(isRhsExpr);
+        groupingKeys.add(groupingKey);
+
+        // Parse the remaining grouping keys
+        nextToken = peek();
+        STNode leadingComma;
+        while (!isEndOfOrderByOrGroupingKeys(nextToken.kind)) {
+            leadingComma = parseComma();
+            groupingKeys.add(leadingComma);
+            groupingKey = parseGroupingKey(isRhsExpr);
+            groupingKeys.add(groupingKey);
+            nextToken = peek();
+        }
+
+        endContext();
+        return STNodeFactory.createNodeList(groupingKeys);
+    }
+
+    /**
+     * Parse grouping key.
+     * <p>
+     * <code>grouping-key := variable-name | type-descriptor variable-name = expression </code>
+     *
+     * @return Parsed node
+     */
+    private STNode parseGroupingKey(boolean isRhsExpr) {
+        STToken nextToken = peek();
+        if (nextToken.kind == SyntaxKind.IDENTIFIER_TOKEN) {
+            return STNodeFactory.createGroupingKeyVariableNode
+                    (parseIdentifier(ParserRuleContext.GROUPING_KEY_VARIABLE));
+        } else {
+            STNode typeDesc = parseTypeDescriptor(ParserRuleContext.GROUPING_KEY_STATEMENT);
+            STNode variableName = parseIdentifier(ParserRuleContext.GROUPING_KEY_STATEMENT);
+            STNode equalToken = parseAssignOp();
+            STNode expression = parseExpression(isRhsExpr);
+            return STNodeFactory.createGroupingKeyStatementNode(typeDesc, variableName, equalToken, expression);
+        }
+    }
+
+    private boolean isEndOfOrderByOrGroupingKeys(SyntaxKind tokenKind) {
+        switch (tokenKind) {
+            case COMMA_TOKEN:
+                return false;
+            case SEMICOLON_TOKEN:
+            case EOF_TOKEN:
+                return true;
+            default:
+                return isNextQueryClauseStart(tokenKind);
+        }
+    }
+
+    private boolean isNextQueryClauseStart(SyntaxKind tokenKind) {
+        switch(tokenKind) {
+            case SELECT_KEYWORD:
+            case LET_KEYWORD:
+            case WHERE_KEYWORD:
+            case ORDER_KEYWORD:
+            case GROUP_KEYWORD:
+                return true;
+            default:
+                return false;
+        }
     }
 
     /**

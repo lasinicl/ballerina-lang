@@ -2868,6 +2868,48 @@ public abstract class NodeFactory extends AbstractNodeFactory {
         return stOnClauseNode.createUnlinkedFacade();
     }
 
+    public static GroupByClauseNode createGroupByClauseNode(
+            Token groupKeyword,
+            Token byKeyword,
+            SeparatedNodeList<GroupingKeyNode> groupingKey) {
+        Objects.requireNonNull(groupKeyword, "groupKeyword must not be null");
+        Objects.requireNonNull(byKeyword, "byKeyword must not be null");
+        Objects.requireNonNull(groupingKey, "groupingKey must not be null");
+
+        STNode stGroupByClauseNode = STNodeFactory.createGroupByClauseNode(
+                groupKeyword.internalNode(),
+                byKeyword.internalNode(),
+                groupingKey.underlyingListNode().internalNode());
+        return stGroupByClauseNode.createUnlinkedFacade();
+    }
+
+    public static GroupingKeyVariableNode createGroupingKeyVariableNode(
+            IdentifierToken variableName) {
+        Objects.requireNonNull(variableName, "variableName must not be null");
+
+        STNode stGroupingKeyVariableNode = STNodeFactory.createGroupingKeyVariableNode(
+                variableName.internalNode());
+        return stGroupingKeyVariableNode.createUnlinkedFacade();
+    }
+
+    public static GroupingKeyStatementNode createGroupingKeyStatementNode(
+            TypeDescriptorNode typeDescriptor,
+            IdentifierToken variableName,
+            Token equalToken,
+            ExpressionNode expression) {
+        Objects.requireNonNull(typeDescriptor, "typeDescriptor must not be null");
+        Objects.requireNonNull(variableName, "variableName must not be null");
+        Objects.requireNonNull(equalToken, "equalToken must not be null");
+        Objects.requireNonNull(expression, "expression must not be null");
+
+        STNode stGroupingKeyStatementNode = STNodeFactory.createGroupingKeyStatementNode(
+                typeDescriptor.internalNode(),
+                variableName.internalNode(),
+                equalToken.internalNode(),
+                expression.internalNode());
+        return stGroupingKeyStatementNode.createUnlinkedFacade();
+    }
+
     public static ListMatchPatternNode createListMatchPatternNode(
             Token openBracket,
             SeparatedNodeList<Node> matchPatterns,

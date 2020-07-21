@@ -760,6 +760,18 @@ public abstract class NodeTransformer<T> {
         return transformSyntaxNode(onClauseNode);
     }
 
+    public T transform(GroupByClauseNode groupByClauseNode) {
+        return transformSyntaxNode(groupByClauseNode);
+    }
+
+    public T transform(GroupingKeyVariableNode groupingKeyVariableNode) {
+        return transformSyntaxNode(groupingKeyVariableNode);
+    }
+
+    public T transform(GroupingKeyStatementNode groupingKeyStatementNode) {
+        return transformSyntaxNode(groupingKeyStatementNode);
+    }
+
     public T transform(ListMatchPatternNode listMatchPatternNode) {
         return transformSyntaxNode(listMatchPatternNode);
     }
