@@ -18,6 +18,8 @@
 package org.ballerinalang.model;
 
 import org.ballerinalang.model.clauses.DoClauseNode;
+import org.ballerinalang.model.clauses.GroupByClauseNode;
+import org.ballerinalang.model.clauses.GroupingKeyNode;
 import org.ballerinalang.model.clauses.InputClauseNode;
 import org.ballerinalang.model.clauses.LetClauseNode;
 import org.ballerinalang.model.clauses.LimitClauseNode;
@@ -173,6 +175,10 @@ import org.wso2.ballerinalang.compiler.tree.BLangTypeDefinition;
 import org.wso2.ballerinalang.compiler.tree.BLangXMLNS;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangDoClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangFromClause;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupByClause;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupingKey;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupingKeyStatement;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupingKeyVariable;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangJoinClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangLetClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangLimitClause;
@@ -776,6 +782,18 @@ public class TreeBuilder {
 
     public static OnClauseNode createOnClauseNode() {
         return new BLangOnClause();
+    }
+
+    public static GroupByClauseNode createGroupByClauseNode() {
+        return new BLangGroupByClause();
+    }
+
+    public static GroupingKeyNode createGroupingKeyVariableNode() {
+        return new BLangGroupingKeyVariable();
+    }
+
+    public static GroupingKeyNode createGroupingKeyStatementNode() {
+        return new BLangGroupingKeyStatement();
     }
 
     public static SelectClauseNode createSelectClauseNode() {

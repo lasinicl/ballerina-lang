@@ -58,6 +58,9 @@ import org.wso2.ballerinalang.compiler.tree.BLangWorker;
 import org.wso2.ballerinalang.compiler.tree.BLangXMLNS;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangDoClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangFromClause;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupByClause;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupingKeyStatement;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupingKeyVariable;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangJoinClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangLetClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangLimitClause;
@@ -1391,6 +1394,30 @@ public class NodeCloner extends BLangNodeVisitor {
     public void visit(BLangOnClause source) {
 
         BLangOnClause clone = new BLangOnClause();
+        source.cloneRef = clone;
+        clone.expression = clone(source.expression);
+    }
+
+    @Override
+    public void visit(BLangGroupByClause source) {
+
+        BLangGroupByClause clone = new BLangGroupByClause();
+        source.cloneRef = clone;
+        clone.groupingKeyList = cloneList(source.groupingKeyList);
+    }
+
+    @Override
+    public void visit(BLangGroupingKeyVariable source) {
+
+        BLangGroupingKeyVariable clone = new BLangGroupingKeyVariable();
+        source.cloneRef = clone;
+        clone.variableNameIdentifier = clone(source.variableNameIdentifier);
+    }
+
+    @Override
+    public void visit(BLangGroupingKeyStatement source) {
+
+        BLangGroupingKeyStatement clone = new BLangGroupingKeyStatement();
         source.cloneRef = clone;
         clone.expression = clone(source.expression);
     }

@@ -46,6 +46,9 @@ import org.wso2.ballerinalang.compiler.tree.BLangTypeDefinition;
 import org.wso2.ballerinalang.compiler.tree.BLangXMLNS;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangDoClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangFromClause;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupByClause;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupingKeyStatement;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupingKeyVariable;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangJoinClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangLetClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangLimitClause;
@@ -951,6 +954,15 @@ public class SymbolReferenceFindingVisitor extends LSNodeVisitor {
     @Override
     public void visit(BLangOnClause onClause) {
         this.acceptNode(onClause.expression);
+    }
+
+    @Override
+    public void visit(BLangGroupByClause groupByClause) {
+        groupByClause.groupingKeyList.forEach(groupingKey -> {
+            if (groupingKey.getKind() == NodeKind.GROUPING_KEY_STATEMENT) {
+                this.acceptNode(((BLangGroupingKeyStatement) groupingKey).expression);
+            }
+        });
     }
 
     @Override

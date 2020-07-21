@@ -182,6 +182,9 @@ public enum NodeKind {
     ON_CONFLICT,
     ON,
     LIMIT,
+    GROUP_BY,
+    GROUPING_KEY_VARIABLE,
+    GROUPING_KEY_STATEMENT,
 
     /* Types */
     ARRAY_TYPE,

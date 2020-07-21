@@ -19,7 +19,9 @@ package org.wso2.ballerinalang.compiler.desugar;
 
 import org.ballerinalang.compiler.CompilerPhase;
 import org.ballerinalang.model.TreeBuilder;
+import org.ballerinalang.model.clauses.GroupingKeyNode;
 import org.ballerinalang.model.clauses.OnClauseNode;
+import org.ballerinalang.model.tree.IdentifierNode;
 import org.ballerinalang.model.tree.NodeKind;
 import org.ballerinalang.model.tree.TopLevelNode;
 import org.ballerinalang.model.tree.expressions.RecordLiteralNode;
@@ -34,6 +36,7 @@ import org.wso2.ballerinalang.compiler.tree.BLangBlockFunctionBody;
 import org.wso2.ballerinalang.compiler.tree.BLangExprFunctionBody;
 import org.wso2.ballerinalang.compiler.tree.BLangExternalFunctionBody;
 import org.wso2.ballerinalang.compiler.tree.BLangFunction;
+import org.wso2.ballerinalang.compiler.tree.BLangIdentifier;
 import org.wso2.ballerinalang.compiler.tree.BLangNode;
 import org.wso2.ballerinalang.compiler.tree.BLangNodeVisitor;
 import org.wso2.ballerinalang.compiler.tree.BLangPackage;
@@ -44,6 +47,10 @@ import org.wso2.ballerinalang.compiler.tree.BLangTypeDefinition;
 import org.wso2.ballerinalang.compiler.tree.BLangXMLNS;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangDoClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangFromClause;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupByClause;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupingKey;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupingKeyStatement;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupingKeyVariable;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangJoinClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangLetClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangLimitClause;
@@ -889,6 +896,17 @@ public class ConstantPropagation extends BLangNodeVisitor {
     public void visit(BLangOnClause onClause) {
         onClause.expression = rewrite(onClause.expression);
         result = onClause;
+    }
+
+    @Override
+    public void visit(BLangGroupByClause groupByClause) {
+        for (GroupingKeyNode groupingKey : groupByClause.groupingKeyList) {
+            if (groupingKey.getKind() == NodeKind.GROUPING_KEY_STATEMENT) {
+                ((BLangGroupingKeyStatement) groupingKey).expression =
+                        rewrite(((BLangGroupingKeyStatement) groupingKey).expression);
+            }
+        }
+        result = groupByClause;
     }
 
     @Override

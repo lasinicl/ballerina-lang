@@ -62,6 +62,9 @@ import org.wso2.ballerinalang.compiler.tree.BLangWorker;
 import org.wso2.ballerinalang.compiler.tree.BLangXMLNS;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangDoClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangFromClause;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupByClause;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupingKeyStatement;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupingKeyVariable;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangJoinClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangLetClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangLimitClause;
@@ -914,6 +917,15 @@ public class DataflowAnalyzer extends BLangNodeVisitor {
     @Override
     public void visit(BLangOnClause onClause) {
         analyzeNode(onClause.expression, env);
+    }
+
+    @Override
+    public void visit(BLangGroupByClause groupByClause) {
+        groupByClause.groupingKeyList.forEach(value -> {
+            if (value.getKind() == NodeKind.GROUPING_KEY_STATEMENT) {
+                analyzeNode(((BLangGroupingKeyStatement) value).expression, env);
+            }
+        });
     }
 
     @Override

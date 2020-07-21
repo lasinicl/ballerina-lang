@@ -21,6 +21,9 @@ import org.wso2.ballerinalang.compiler.tree.BLangXMLNS.BLangLocalXMLNS;
 import org.wso2.ballerinalang.compiler.tree.BLangXMLNS.BLangPackageXMLNS;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangDoClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangFromClause;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupByClause;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupingKeyStatement;
+import org.wso2.ballerinalang.compiler.tree.clauses.BLangGroupingKeyVariable;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangJoinClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangLetClause;
 import org.wso2.ballerinalang.compiler.tree.clauses.BLangLimitClause;
@@ -357,6 +360,18 @@ public abstract class BLangNodeVisitor {
     }
 
     public void visit(BLangOnClause onClause) {
+        throw new AssertionError();
+    }
+
+    public void visit(BLangGroupByClause groupByClause) {
+        throw new AssertionError();
+    }
+
+    public void visit(BLangGroupingKeyVariable groupingKeyVariable) {
+        throw new AssertionError();
+    }
+
+    public void visit(BLangGroupingKeyStatement groupingKeyStatement) {
         throw new AssertionError();
     }
 
