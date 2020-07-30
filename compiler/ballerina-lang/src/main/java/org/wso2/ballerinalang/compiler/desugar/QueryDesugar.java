@@ -23,6 +23,7 @@ import org.ballerinalang.model.tree.NodeKind;
 import org.ballerinalang.model.tree.expressions.RecordLiteralNode;
 import org.ballerinalang.model.tree.statements.VariableDefinitionNode;
 import org.ballerinalang.model.tree.types.TypeNode;
+import org.ballerinalang.model.types.Type;
 import org.ballerinalang.model.types.TypeKind;
 import org.wso2.ballerinalang.compiler.semantics.analyzer.SymbolResolver;
 import org.wso2.ballerinalang.compiler.semantics.analyzer.Types;
@@ -36,6 +37,7 @@ import org.wso2.ballerinalang.compiler.semantics.model.symbols.SymTag;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BArrayType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BRecordType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BStreamType;
+import org.wso2.ballerinalang.compiler.semantics.model.types.BTupleType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BTypedescType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BUnionType;
@@ -85,6 +87,7 @@ import org.wso2.ballerinalang.compiler.tree.expressions.BLangLambdaFunction;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangLetExpression;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangListConstructorExpr;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangListConstructorExpr.BLangArrayLiteral;
+import org.wso2.ballerinalang.compiler.tree.expressions.BLangListConstructorExpr.BLangTupleLiteral;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangLiteral;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangMatchExpression;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangNamedArgsExpression;
@@ -191,6 +194,7 @@ public class QueryDesugar extends BLangNodeVisitor {
     private static final Name QUERY_CREATE_OUTER_JOIN_FUNCTION = new Name("createOuterJoinFunction");
     private static final Name QUERY_CREATE_FILTER_FUNCTION = new Name("createFilterFunction");
     private static final Name QUERY_CREATE_ORDER_BY_FUNCTION = new Name("createOrderByFunction");
+    private static final Name QUERY_CREATE_SORT_STREAM_FUNCTION = new Name("sortStreamFunction");
     private static final Name QUERY_CREATE_SELECT_FUNCTION = new Name("createSelectFunction");
     private static final Name QUERY_CREATE_DO_FUNCTION = new Name("createDoFunction");
     private static final Name QUERY_CREATE_LIMIT_FUNCTION = new Name("createLimitFunction");
@@ -209,6 +213,7 @@ public class QueryDesugar extends BLangNodeVisitor {
     private BLangBlockFunctionBody currentLambdaBody;
     private Map<String, BSymbol> identifiers;
     private int streamElementCount = 0;
+    private int orderKeyElementCount = 0;
     private final Desugar desugar;
     private final SymbolTable symTable;
     private final SymbolResolver symResolver;
@@ -251,7 +256,8 @@ public class QueryDesugar extends BLangNodeVisitor {
             BLangArrayLiteral orderArr = (BLangArrayLiteral) TreeBuilder.createArrayLiteralExpressionNode();
             orderArr.exprs = new ArrayList<>();
             orderArr.type = new BArrayType(types.resolveExprType(queryExpr.type));
-            streamRef = sortStream(queryBlock, orderByClause, streamRef, orderArr);
+            streamRef = getStreamFunctionVariableRef(queryBlock, QUERY_CREATE_SORT_STREAM_FUNCTION,
+                    Lists.of(streamRef, orderArr), orderByClause.pos);
         }
         if (queryExpr.isStream) {
             streamStmtExpr = ASTBuilderUtil.createStatementExpression(queryBlock, streamRef);
@@ -354,6 +360,8 @@ public class QueryDesugar extends BLangNodeVisitor {
                     break;
                 case ORDER_BY:
                     orderByClause = (BLangOrderByClause) clause;
+                    BLangVariableReference orderFunc = addOrderByFunction(block, orderByClause);
+                    addStreamFunction(block, initPipeline, orderFunc);
                     break;
                 case SELECT:
                     BLangVariableReference selectFunc = addSelectFunction(block, (BLangSelectClause) clause);
@@ -574,6 +582,45 @@ public class QueryDesugar extends BLangNodeVisitor {
         return getStreamFunctionVariableRef(blockStmt, QUERY_CREATE_FILTER_FUNCTION, Lists.of(lambda), pos);
     }
 
+    BLangVariableReference addOrderByFunction(BLangBlockStmt blockStmt, BLangOrderByClause orderByClause) {
+        DiagnosticPos pos = orderByClause.pos;
+
+        BLangLambdaFunction lambda = createActionLambda(pos);
+        BLangBlockFunctionBody body = (BLangBlockFunctionBody) lambda.function.body;
+        BVarSymbol frameSymbol = lambda.function.requiredParams.get(0).symbol;
+        BLangSimpleVarRef frame = ASTBuilderUtil.createVariableRef(pos, frameSymbol);
+
+        BLangArrayLiteral sortFieldsArrayExpr = (BLangArrayLiteral) TreeBuilder.createArrayLiteralExpressionNode();
+        sortFieldsArrayExpr.exprs = new ArrayList<>();
+        sortFieldsArrayExpr.type = new BArrayType(symTable.anydataType);
+
+        BLangArrayLiteral sortModesArrayExpr = (BLangArrayLiteral) TreeBuilder.createArrayLiteralExpressionNode();
+        sortModesArrayExpr.exprs = new ArrayList<>();
+        sortModesArrayExpr.type = new BArrayType(symTable.booleanType);
+
+        for (OrderKeyNode orderKeyNode : orderByClause.getOrderKeyList()) {
+            BLangOrderKey orderKey = (BLangOrderKey) orderKeyNode;
+            sortFieldsArrayExpr.exprs.add(orderKey.expression);
+            sortModesArrayExpr.exprs.add(ASTBuilderUtil.createLiteral(orderKey.pos, symTable.booleanType,
+                    orderKey.getOrderDirection()));
+        }
+
+        BLangStatement orderKeyStmt = getAddToFrameStmt(pos, frame, "$orderKey$", sortFieldsArrayExpr);
+        body.addStatement(orderKeyStmt);
+
+        lambda.accept(this);
+        return getStreamFunctionVariableRef(blockStmt, QUERY_CREATE_ORDER_BY_FUNCTION, Lists.of(lambda,
+                sortModesArrayExpr), pos);
+
+    }
+
+    private BLangValueType getStringTypeNode() {
+        BLangValueType stringTypeNode = (BLangValueType) TreeBuilder.createValueTypeNode();
+        stringTypeNode.typeKind = TypeKind.STRING;
+        stringTypeNode.type = symTable.stringType;
+        return stringTypeNode;
+    }
+
     /**
      * Desugar order by clause and return a reference to created order by function.
      *
@@ -587,30 +634,30 @@ public class QueryDesugar extends BLangNodeVisitor {
 
         DiagnosticPos pos = orderByClause.pos;
 
-        // order by name descending, age ascending
-        // sortFieldsArrayExpr keeps the ordering fields --> name, age
-        // sortModesArrayExpr keeps the order direction --> false, true
+//        // order by name descending, age ascending
+//        // sortFieldsArrayExpr keeps the ordering fields --> name, age
+//        // sortModesArrayExpr keeps the order direction --> false, true
+//
+//        BLangArrayLiteral sortFieldsArrayExpr = (BLangArrayLiteral) TreeBuilder.createArrayLiteralExpressionNode();
+//        sortFieldsArrayExpr.exprs = new ArrayList<>();
+//        sortFieldsArrayExpr.type = new BArrayType(symTable.tupleType);
+//
+//        BLangArrayLiteral sortModesArrayExpr = (BLangArrayLiteral) TreeBuilder.createArrayLiteralExpressionNode();
+//        sortModesArrayExpr.exprs = new ArrayList<>();
+//        sortModesArrayExpr.type = new BArrayType(symTable.booleanType);
+//
+//        for (OrderKeyNode orderKeyNode : orderByClause.getOrderKeyList()) {
+//            BLangOrderKey orderKey = (BLangOrderKey) orderKeyNode;
+//            String fieldName = orderKey.expression.toString();
+//            sortFieldsArrayExpr.exprs.add(ASTBuilderUtil.createLiteral(orderKey.pos, symTable.stringType,
+//                    fieldName));
+//            boolean fieldOrderType = orderKey.getOrderDirection();
+//            sortModesArrayExpr.exprs.add(ASTBuilderUtil.createLiteral(orderKey.pos, symTable.booleanType,
+//                    fieldOrderType));
+//        }
 
-        BLangArrayLiteral sortFieldsArrayExpr = (BLangArrayLiteral) TreeBuilder.createArrayLiteralExpressionNode();
-        sortFieldsArrayExpr.exprs = new ArrayList<>();
-        sortFieldsArrayExpr.type = new BArrayType(symTable.stringType);
-
-        BLangArrayLiteral sortModesArrayExpr = (BLangArrayLiteral) TreeBuilder.createArrayLiteralExpressionNode();
-        sortModesArrayExpr.exprs = new ArrayList<>();
-        sortModesArrayExpr.type = new BArrayType(symTable.booleanType);
-
-        for (OrderKeyNode orderKeyNode : orderByClause.getOrderKeyList()) {
-            BLangOrderKey orderKey = (BLangOrderKey) orderKeyNode;
-            String fieldName = orderKey.expression.toString();
-            sortFieldsArrayExpr.exprs.add(ASTBuilderUtil.createLiteral(orderKey.pos, symTable.stringType,
-                    fieldName));
-            boolean fieldOrderType = orderKey.getOrderDirection();
-            sortModesArrayExpr.exprs.add(ASTBuilderUtil.createLiteral(orderKey.pos, symTable.booleanType,
-                    fieldOrderType));
-        }
-
-        return getStreamFunctionVariableRef(blockStmt, QUERY_CREATE_ORDER_BY_FUNCTION,
-                Lists.of(sortFieldsArrayExpr, sortModesArrayExpr, streamRef, arr), pos);
+        return getStreamFunctionVariableRef(blockStmt, QUERY_CREATE_SORT_STREAM_FUNCTION,
+                Lists.of(streamRef, arr), pos);
     }
 
 
@@ -885,6 +932,10 @@ public class QueryDesugar extends BLangNodeVisitor {
      */
     private String getNewVarName() {
         return "$streamElement$" + streamElementCount++;
+    }
+
+    private String getNewOrderKeyVarName(int i) {
+        return "$orderBy$" + i;
     }
 
     /**

@@ -2715,9 +2715,10 @@ public class CodeAnalyzer extends BLangNodeVisitor {
                         this.dlog.error(collection.pos, DiagnosticCode.NOT_ALLOWED_STREAM_USAGE_WITH_FROM);
                     }
                 }
-            } else if (clause.getKind() == NodeKind.ORDER_BY) {
-                checkOrderFieldValidity(queryExpr.type, (BLangOrderByClause) clause);
             }
+//            else if (clause.getKind() == NodeKind.ORDER_BY) {
+//                checkOrderFieldValidity(queryExpr.type, (BLangOrderByClause) clause);
+//            }
             analyzeNode(clause, env);
         }
     }
