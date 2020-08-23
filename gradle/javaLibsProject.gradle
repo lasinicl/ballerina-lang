@@ -117,6 +117,7 @@ dependencies {
     dist project(':ballerina-time')
     dist project(':ballerina-tool')
     dist project(':ballerina-transactions')
+    dist project(':ballerina-transaction-internal')
     dist project(':ballerina-java')
     dist project(':ballerina-java-arrays')
     dist project(':metrics-extensions:ballerina-metrics-extension')

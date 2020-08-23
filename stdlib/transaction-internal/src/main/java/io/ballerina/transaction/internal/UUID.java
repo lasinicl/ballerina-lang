@@ -16,32 +16,31 @@
  * under the License.
  */
 
-package org.ballerinalang.langlib.transaction;
+package io.ballerina.transaction.internal;
 
-import org.ballerinalang.jvm.scheduling.Strand;
-import org.ballerinalang.jvm.transactions.TransactionLocalContext;
+import org.ballerinalang.jvm.StringUtils;
+import org.ballerinalang.jvm.values.api.BString;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.ReturnType;
 
-import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_VERSION;
+import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_INTERNAL_VERSION;
 
 /**
- * Extern function transaction:getRollbackOnlyError.
+ * Extern function transaction:uuid.
  *
  * @since 2.0.0-preview1
  */
 @BallerinaFunction(
-        orgName = "ballerina", packageName = "lang.transaction", version = TRANSACTION_VERSION,
-        functionName = "getRollbackOnlyError",
+        orgName = "ballerina", packageName = "transaction-internal", version = TRANSACTION_INTERNAL_VERSION,
+        functionName = "uuid",
         args = {},
-        returnType = {@ReturnType(type = TypeKind.BOOLEAN)},
+        returnType = {@ReturnType(type = TypeKind.STRING)},
         isPublic = true
 )
-public class GetRollbackOnlyError {
+public class UUID {
 
-    public static Object getRollbackOnlyError(Strand strand) {
-        TransactionLocalContext transactionLocalContext = strand.currentTrxContext;
-        return transactionLocalContext.getRollbackOnly();
+    public static BString uuid() {
+        return StringUtils.fromString(java.util.UUID.randomUUID().toString());
     }
 }

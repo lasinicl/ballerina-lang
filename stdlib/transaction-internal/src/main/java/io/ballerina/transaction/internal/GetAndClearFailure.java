@@ -16,37 +16,32 @@
  * under the License.
  */
 
-package org.ballerinalang.langlib.transaction;
+package io.ballerina.transaction.internal;
 
+import org.ballerinalang.jvm.scheduling.Scheduler;
 import org.ballerinalang.jvm.scheduling.Strand;
-import org.ballerinalang.jvm.transactions.TransactionResourceManager;
-import org.ballerinalang.jvm.values.api.BString;
 import org.ballerinalang.model.types.TypeKind;
-import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.ReturnType;
 
-import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_VERSION;
+import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_INTERNAL_VERSION;
 
 /**
- * Extern function transaction:abortResourceManagers.
+ * Extern function transaction:getAndClearFailure.
  *
  * @since 2.0.0-preview1
  */
 @BallerinaFunction(
-        orgName = "ballerina", packageName = "lang.transaction", version = TRANSACTION_VERSION,
-        functionName = "abortResourceManagers",
-        args = {
-                @Argument(name = "transactionId", type = TypeKind.STRING),
-                @Argument(name = "transactionBlockId", type = TypeKind.STRING)
-        },
+        orgName = "ballerina", packageName = "transaction-internal", version = TRANSACTION_INTERNAL_VERSION,
+        functionName = "getAndClearFailure",
+        args = {},
         returnType = {@ReturnType(type = TypeKind.BOOLEAN)},
         isPublic = true
 )
-public class AbortResourceManagers {
+public class GetAndClearFailure {
 
-    public static boolean abortResourceManagers(Strand strand, BString transactionId, BString transactionBlockId) {
-        return TransactionResourceManager.getInstance().notifyAbort(strand, transactionId.getValue(),
-                transactionBlockId.getValue(), null);
+    public static boolean getAndClearFailure() {
+        Strand strand = Scheduler.getStrand();
+        return strand.currentTrxContext.getAndClearFailure() != null;
     }
 }

@@ -16,27 +16,31 @@
  * under the License.
  */
 
-package org.ballerinalang.langlib.transaction;
+package io.ballerina.transaction.internal;
 
-import org.ballerinalang.jvm.scheduling.Strand;
+import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
+import org.ballerinalang.natives.annotations.ReturnType;
 
-import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_VERSION;
+import java.time.Instant;
+
+import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_INTERNAL_VERSION;
 
 /**
- * Extern function transaction:setContextAsNonTransactional.
+ * Extern function transaction:timeNow.
  *
- * @since Swan Lake
+ * @since 2.0.0-preview1
  */
 @BallerinaFunction(
-        orgName = "ballerina", packageName = "lang.transaction", version = TRANSACTION_VERSION,
-        functionName = "setContextAsNonTransactional",
+        orgName = "ballerina", packageName = "transaction-internal", version = TRANSACTION_INTERNAL_VERSION,
+        functionName = "timeNow",
         args = {},
+        returnType = {@ReturnType(type = TypeKind.INT)},
         isPublic = true
 )
-public class SetContextAsNonTransactional {
+public class CurrentTime {
 
-    public static void setContextAsNonTransactional(Strand strand) {
-        strand.currentTrxContext.setTransactional(false);
+    public static long timeNow() {
+        return Instant.now().toEpochMilli();
     }
 }

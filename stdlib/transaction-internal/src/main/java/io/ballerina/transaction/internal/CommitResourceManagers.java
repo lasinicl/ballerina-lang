@@ -16,8 +16,9 @@
  * under the License.
  */
 
-package org.ballerinalang.langlib.transaction;
+package io.ballerina.transaction.internal;
 
+import org.ballerinalang.jvm.scheduling.Scheduler;
 import org.ballerinalang.jvm.scheduling.Strand;
 import org.ballerinalang.jvm.transactions.TransactionResourceManager;
 import org.ballerinalang.jvm.values.api.BString;
@@ -26,7 +27,7 @@ import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.ReturnType;
 
-import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_VERSION;
+import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_INTERNAL_VERSION;
 
 /**
  * Extern function transaction:commitResourceManagers.
@@ -34,7 +35,7 @@ import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_VERSION;
  * @since 2.0.0-preview1
  */
 @BallerinaFunction(
-        orgName = "ballerina", packageName = "lang.transaction", version = TRANSACTION_VERSION,
+        orgName = "ballerina", packageName = "transaction-internal", version = TRANSACTION_INTERNAL_VERSION,
         functionName = "commitResourceManagers",
         args = {
                 @Argument(name = "transactionId", type = TypeKind.STRING),
@@ -45,7 +46,8 @@ import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_VERSION;
 )
 public class CommitResourceManagers {
 
-    public static boolean commitResourceManagers(Strand strand, BString transactionId, BString transactionBlockId) {
+    public static boolean commitResourceManagers(BString transactionId, BString transactionBlockId) {
+        Strand strand = Scheduler.getStrand();
         return TransactionResourceManager.getInstance().notifyCommit(strand, transactionId.getValue(),
                 transactionBlockId.getValue());
     }

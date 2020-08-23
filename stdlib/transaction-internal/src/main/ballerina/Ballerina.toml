@@ -1,0 +1,13 @@
+[project]
+org-name = "ballerina"
+version = "1.0.0"
+
+[platform]
+target = "java8"
+
+    [[platform.libraries]]
+    artifactId = "transaction-internal"
+    version = "1.0.0"
+    path = "./lib/ballerina-transaction-internal-1.0.0-java.jar"
+    groupId = "ballerina"
+    modules = ["transaction-internal"]

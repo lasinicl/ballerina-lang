@@ -16,10 +16,11 @@
  * under the License.
  */
 
-package org.ballerinalang.langlib.transaction;
+package io.ballerina.transaction.internal;
 
 import org.ballerinalang.jvm.BallerinaValues;
 import org.ballerinalang.jvm.StringUtils;
+import org.ballerinalang.jvm.scheduling.Scheduler;
 import org.ballerinalang.jvm.scheduling.Strand;
 import org.ballerinalang.jvm.transactions.TransactionConstants;
 import org.ballerinalang.jvm.transactions.TransactionLocalContext;
@@ -35,7 +36,7 @@ import java.nio.charset.Charset;
 import java.util.Map;
 
 import static org.ballerinalang.jvm.transactions.TransactionConstants.TRANSACTION_PACKAGE_ID;
-import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_VERSION;
+import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_INTERNAL_VERSION;
 
 /**
  * Extern function transaction:setTransactionContext.
@@ -43,7 +44,7 @@ import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_VERSION;
  * @since 2.0.0-preview1
  */
 @BallerinaFunction(
-        orgName = "ballerina", packageName = "lang.transaction", version = TRANSACTION_VERSION,
+        orgName = "ballerina", packageName = "transaction-internal", version = TRANSACTION_INTERNAL_VERSION,
         functionName = "setTransactionContext",
         args = {
                 @Argument(name = "transactionContext", type = TypeKind.RECORD),
@@ -54,7 +55,8 @@ import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_VERSION;
 )
 public class SetTransactionContext {
 
-    public static void setTransactionContext(Strand strand, MapValue txDataStruct, Object prevAttemptInfo) {
+    public static void setTransactionContext(MapValue txDataStruct, Object prevAttemptInfo) {
+        Strand strand = Scheduler.getStrand();
         String globalTransactionId = txDataStruct.get(TransactionConstants.TRANSACTION_ID).toString();
         String transactionBlockId = txDataStruct.get(TransactionConstants.TRANSACTION_BLOCK_ID).toString();
         String url = txDataStruct.get(TransactionConstants.REGISTER_AT_URL).toString();

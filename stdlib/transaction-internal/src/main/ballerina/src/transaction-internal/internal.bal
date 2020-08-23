@@ -13,7 +13,9 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+import ballerina/java;
 import ballerina/lang.'value as value;
+import ballerina/lang.'transaction as trx_lang;
 
 const string TWO_PHASE_COMMIT = "2pc";
 const string PROTOCOL_COMPLETION = "completion";
@@ -239,8 +241,8 @@ type TwoPhaseCommitTransaction object {
     }
 
     // This function will be called by the initiator
-    function twoPhaseCommit() returns string|Error {
-        string|Error ret = "";
+    function twoPhaseCommit() returns string|trx_lang:Error {
+        string|trx_lang:Error ret = "";
 
         // Prepare local resource managers
         boolean localPrepareSuccessful = prepareResourceManagers(self.transactionId, self.transactionBlockId);
@@ -269,12 +271,12 @@ type TwoPhaseCommitTransaction object {
                 var result = self.notifyParticipants(COMMAND_COMMIT, ());
                 if (result is error) {
                     // return Hazard outcome if a participant cannot successfully end its branch of the transaction
-                    ret = prepareError(OUTCOME_HAZARD);
+                    ret = trx_lang:prepareError(OUTCOME_HAZARD);
                 } else {
                     boolean localCommitSuccessful = commitResourceManagers(self.transactionId, self.transactionBlockId);
                     if (!localCommitSuccessful) {
                         // "Local commit failed"
-                        ret = prepareError(OUTCOME_HAZARD);
+                        ret = trx_lang:prepareError(OUTCOME_HAZARD);
                     } else {
                         ret = OUTCOME_COMMITTED;
                     }
@@ -285,11 +287,11 @@ type TwoPhaseCommitTransaction object {
                 var result = self.notifyParticipants(COMMAND_ABORT, ());
                 if (result is error) {
                     // return Hazard outcome if a participant cannot successfully end its branch of the transaction
-                    ret = prepareError(OUTCOME_HAZARD);
+                    ret = trx_lang:prepareError(OUTCOME_HAZARD);
                 } else {
                     boolean localAbortSuccessful = abortResourceManagers(self.transactionId, self.transactionBlockId);
                     if (!localAbortSuccessful) {
-                        ret = prepareError(OUTCOME_HAZARD);
+                        ret = trx_lang:prepareError(OUTCOME_HAZARD);
                     } else {
                         if (self.possibleMixedOutcome) {
                             ret = OUTCOME_MIXED;
@@ -305,11 +307,11 @@ type TwoPhaseCommitTransaction object {
             var result = self.notifyParticipants(COMMAND_ABORT, PROTOCOL_VOLATILE);
             if (result is error) {
                 // return Hazard outcome if a participant cannot successfully end its branch of the transaction
-                ret = prepareError(OUTCOME_HAZARD);
+                ret = trx_lang:prepareError(OUTCOME_HAZARD);
             } else {
                 boolean localAbortSuccessful = abortResourceManagers(self.transactionId, self.transactionBlockId);
                 if (!localAbortSuccessful) {
-                    ret = prepareError(OUTCOME_HAZARD);
+                    ret = trx_lang:prepareError(OUTCOME_HAZARD);
                 } else {
                     if (self.possibleMixedOutcome) {
                         ret = OUTCOME_MIXED;
@@ -429,17 +431,17 @@ type TwoPhaseCommitTransaction object {
     }
 
     // This function will be called by the initiator
-    function abortInitiatorTransaction() returns string|Error {
-        string|Error ret = "";
+    function abortInitiatorTransaction() returns string|trx_lang:Error {
+        string|trx_lang:Error ret = "";
         // return response to the initiator. ( Aborted | Mixed )
         var result = self.notifyParticipants(COMMAND_ABORT, ());
         if (result is error) {
             // return Hazard outcome if a participant cannot successfully end its branch of the transaction
-            ret = prepareError(OUTCOME_HAZARD);
+            ret = trx_lang:prepareError(OUTCOME_HAZARD);
         } else {
             boolean localAbortSuccessful = abortResourceManagers(self.transactionId, self.transactionBlockId);
             if (!localAbortSuccessful) {
-                ret = prepareError(OUTCOME_HAZARD);
+                ret = trx_lang:prepareError(OUTCOME_HAZARD);
             } else {
                 if (self.possibleMixedOutcome) {
                     ret = OUTCOME_MIXED;
@@ -481,7 +483,7 @@ type TwoPhaseCommitTransaction object {
 # This map is used for caching transaction that are initiated.
 map<TwoPhaseCommitTransaction> initiatedTransactions = {};
 
-function startTransaction(string transactionBlockId, Info? prevAttempt = ()) returns string {
+function startTransaction(string transactionBlockId, trx_lang:Info? prevAttempt = ()) returns string {
     string transactionId = "";
     TransactionContext|error txnContext = createTransactionContext(TWO_PHASE_COMMIT, transactionBlockId);
     if (txnContext is error) {
@@ -503,8 +505,8 @@ function startTransaction(string transactionBlockId, Info? prevAttempt = ()) ret
 # + transactionBlockId - ID of the transaction block. Each transaction block in a process has a unique ID.
 # + return - A string or an error representing the transaction end succcess status or failure respectively.
 transactional function endTransaction(string transactionId, string transactionBlockId)
-        returns @tainted string|Error? {
-    if (getRollbackOnly()) {
+        returns @tainted string|trx_lang:Error? {
+    if (trx_lang:getRollbackOnly()) {
         return getRollbackOnlyError();
     }
 
@@ -526,7 +528,7 @@ transactional function endTransaction(string transactionId, string transactionBl
             if (initiatedTxn.state == TXN_STATE_ABORTED) {
                 return initiatedTxn.abortInitiatorTransaction();
             } else {
-                string|Error ret = initiatedTxn.twoPhaseCommit();
+                string|trx_lang:Error ret = initiatedTxn.twoPhaseCommit();
                 removeInitiatedTransaction(transactionId);
                 return ret;
             }
@@ -569,54 +571,96 @@ function createTransactionContext(string coordinationType, string transactionBlo
 # + transactionId - Globally unique transaction ID.
 # + transactionBlockId - ID of the transaction block. Each transaction block in a process has a unique ID.
 # + return - true or false representing whether the commit is successful or not.
-function commitResourceManagers(string transactionId, string transactionBlockId) returns boolean = external;
+function commitResourceManagers(string transactionId, string transactionBlockId) returns boolean = @java:Method {
+    class: "io.ballerina.transaction.internal.CommitResourceManagers",
+    name: "commitResourceManagers"
+} external;
 
 # Prepare local resource managers.
 #
 # + transactionId - Globally unique transaction ID.
 # + transactionBlockId - ID of the transaction block. Each transaction block in a process has a unique ID.
 # + return - true or false representing whether the resource manager preparation is successful or not.
-function prepareResourceManagers(string transactionId, string transactionBlockId) returns boolean = external;
+function prepareResourceManagers(string transactionId, string transactionBlockId) returns boolean = @java:Method {
+    class: "io.ballerina.transaction.internal.PrepareResourceManagers",
+    name: "prepareResourceManagers"
+} external;
 
 # Abort local resource managers.
 #
 # + transactionId - Globally unique transaction ID.
 # + transactionBlockId - ID of the transaction block. Each transaction block in a process has a unique ID.
 # + return - true or false representing whether the resource manager abortion is successful or not.
-function abortResourceManagers(string transactionId, string transactionBlockId) returns boolean = external;
+function abortResourceManagers(string transactionId, string transactionBlockId) returns boolean = @java:Method {
+    class: "io.ballerina.transaction.internal.AbortResourceManagers",
+    name: "abortResourceManagers"
+} external;
 
 # Set the transactionContext.
 #
 # + transactionContext - Transaction context.
 # + prevAttempt - Information related to previous attempt.
-function setTransactionContext(TransactionContext transactionContext, Info? prevAttempt = ()) = external;
+function setTransactionContext(TransactionContext transactionContext, trx_lang:Info? prevAttempt = ()) = @java:Method {
+    class: "io.ballerina.transaction.internal.SetTransactionContext",
+    name: "setTransactionContext"
+} external;
 
 # Rollback the transaction.
 #
 # + transactionBlockId - ID of the transaction block.
 # + err - The cause of the rollback.
-function rollbackTransaction(string transactionBlockId, error? err = ()) = external;
+function rollbackTransaction(string transactionBlockId, error? err = ()) = @java:Method {
+    class: "io.ballerina.transaction.internal.RollbackTransaction",
+    name: "rollbackTransaction"
+} external;
 
 # Get and Cleanup the failure.
 #
 # + return - is failed.
-function getAndClearFailure() returns boolean = external;
+function getAndClearFailure() returns boolean = @java:Method {
+    class: "io.ballerina.transaction.internal.GetAndClearFailure",
+    name: "getAndClearFailure"
+} external;
 
 # Cleanup the transaction context.
 #
 # + transactionBlockId - ID of the transaction block.
-function cleanupTransactionContext(string transactionBlockId) = external;
+function cleanupTransactionContext(string transactionBlockId) = @java:Method {
+    class: "io.ballerina.transaction.internal.CleanUpTransactionContext",
+    name: "cleanupTransactionContext"
+} external;
 
-function isTransactional() returns boolean = external;
+function isTransactional() returns boolean = @java:Method {
+    class: "io.ballerina.transaction.internal.IsTransactional",
+    name: "isTransactional"
+} external;
 
-function getAvailablePort() returns int = external;
+function getAvailablePort() returns int = @java:Method {
+    class: "io.ballerina.transaction.internal.GetAvailablePort",
+    name: "getAvailablePort"
+} external;
 
-function getHostAddress() returns string = external;
+function getHostAddress() returns string = @java:Method {
+    class: "io.ballerina.transaction.internal.GetHostAddress",
+    name: "getHostAddress"
+} external;
 
-function uuid() returns string = external;
+function uuid() returns string = @java:Method {
+    class: "io.ballerina.transaction.internal.UUID",
+    name: "uuid"
+} external;
 
-function timeNow() returns int = external;
+function timeNow() returns int = @java:Method {
+    class: "io.ballerina.transaction.internal.CurrentTime",
+    name: "timeNow"
+} external;
 
-function getRollbackOnlyError() returns Error? = external;
+function getRollbackOnlyError() returns trx_lang:Error? = @java:Method {
+    class: "io.ballerina.transaction.internal.GetRollbackOnlyError",
+    name: "getRollbackOnlyError"
+} external;
 
-function setContextAsNonTransactional() = external;
+function setContextAsNonTransactional() = @java:Method {
+    class: "io.ballerina.transaction.internal.SetContextAsNonTransactional",
+    name: "setContextAsNonTransactional"
+} external;
