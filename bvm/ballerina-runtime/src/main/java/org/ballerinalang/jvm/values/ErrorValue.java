@@ -87,6 +87,16 @@ public class ErrorValue extends BError implements RefValue {
                 getCauseToString(linkParent) + getDetailsToString(linkParent) + ")";
     }
 
+    @Override
+    public String toBalString(BLink parent) {
+        CycleUtils.Node linkParent = new CycleUtils.Node(this, parent);
+        if (isEmptyDetail()) {
+            return "error" + getModuleName() + "(" + ((StringValue) message).informalStringValue(linkParent) + ")";
+        }
+        return "error" + getModuleName() + "(" + ((StringValue) message).informalStringValue(linkParent) +
+                getCauseToString(linkParent) + getDetailsToString(linkParent) + ")";
+    }
+
     private String getCauseToString(BLink parent) {
         if (cause != null) {
             return "," + cause.informalStringValue(parent);

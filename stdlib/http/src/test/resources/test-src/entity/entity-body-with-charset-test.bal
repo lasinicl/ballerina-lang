@@ -1,4 +1,5 @@
 import ballerina/http;
+import ballerina/io;
 
 string textValue = "Hello Ballerina!";
 xml testValue = xml `<test><name>ballerina</name></test>`;
@@ -6,6 +7,14 @@ xml xmlValue = xml `<菜鸟驿站><name>菜鸟驿站</name></菜鸟驿站>`;
 
 //Request charset with json payload
 function testSetJsonPayloadWithoutCharset() returns @tainted string[] {
+    error cause = error("Some issue");
+    http:FailoverAllEndpointsFailedError err = http:FailoverAllEndpointsFailedError("failoverMessage", failoverErrors
+     = cause);
+
+    io:println(err.toString());
+
+
+
     http:Request request = new;
     request.setJsonPayload({ test: "testValue" });
     return request.getHeaders("content-type");
