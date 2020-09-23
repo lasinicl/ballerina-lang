@@ -16,30 +16,31 @@
  * under the License.
  */
 
-package org.ballerinalang.langlib.transaction;
+package io.ballerina.transaction.internal;
 
-import org.ballerinalang.jvm.scheduling.Strand;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.ReturnType;
 
-import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_VERSION;
+import java.time.Instant;
+
+import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_INTERNAL_VERSION;
 
 /**
- * Extern function transaction:getAndClearFailure.
+ * Extern function transaction:timeNow.
  *
- * @since 2.0.0-preview1
+ * @since Swan Lake
  */
 @BallerinaFunction(
-        orgName = "ballerina", packageName = "lang.transaction", version = TRANSACTION_VERSION,
-        functionName = "getAndClearFailure",
+        orgName = "ballerina", packageName = "transaction-internal", version = TRANSACTION_INTERNAL_VERSION,
+        functionName = "timeNow",
         args = {},
-        returnType = {@ReturnType(type = TypeKind.BOOLEAN)},
+        returnType = {@ReturnType(type = TypeKind.INT)},
         isPublic = true
 )
-public class GetAndClearFailure {
+public class CurrentTime {
 
-    public static boolean getAndClearFailure(Strand strand) {
-        return strand.currentTrxContext.getAndClearFailure() != null;
+    public static long timeNow() {
+        return Instant.now().toEpochMilli();
     }
 }

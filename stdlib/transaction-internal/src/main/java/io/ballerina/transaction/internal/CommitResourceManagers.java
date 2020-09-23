@@ -16,9 +16,10 @@
  * under the License.
  */
 
-package org.ballerinalang.langlib.transaction;
+package io.ballerina.transaction.internal;
 
 import org.ballerinalang.jvm.api.values.BString;
+import org.ballerinalang.jvm.scheduling.Scheduler;
 import org.ballerinalang.jvm.scheduling.Strand;
 import org.ballerinalang.jvm.transactions.TransactionResourceManager;
 import org.ballerinalang.model.types.TypeKind;
@@ -26,16 +27,16 @@ import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.ReturnType;
 
-import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_VERSION;
+import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_INTERNAL_VERSION;
 
 /**
- * Extern function transaction:prepareResourceManagers.
+ * Extern function transaction:commitResourceManagers.
  *
- * @since 2.0.0-preview1
+ * @since Swan Lake
  */
 @BallerinaFunction(
-        orgName = "ballerina", packageName = "lang.transaction", version = TRANSACTION_VERSION,
-        functionName = "prepareResourceManagers",
+        orgName = "ballerina", packageName = "transaction-internal", version = TRANSACTION_INTERNAL_VERSION,
+        functionName = "commitResourceManagers",
         args = {
                 @Argument(name = "transactionId", type = TypeKind.STRING),
                 @Argument(name = "transactionBlockId", type = TypeKind.STRING)
@@ -43,10 +44,11 @@ import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_VERSION;
         returnType = {@ReturnType(type = TypeKind.BOOLEAN)},
         isPublic = true
 )
-public class PrepareResourceManagers {
+public class CommitResourceManagers {
 
-    public static boolean prepareResourceManagers(Strand strand, BString transactionId, BString transactionBlockId) {
-        return TransactionResourceManager.getInstance().prepare(transactionId.getValue(),
+    public static boolean commitResourceManagers(BString transactionId, BString transactionBlockId) {
+        Strand strand = Scheduler.getStrand();
+        return TransactionResourceManager.getInstance().notifyCommit(strand, transactionId.getValue(),
                 transactionBlockId.getValue());
     }
 }

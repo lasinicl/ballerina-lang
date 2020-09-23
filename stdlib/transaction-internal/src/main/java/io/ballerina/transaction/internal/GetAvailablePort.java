@@ -16,9 +16,8 @@
  * under the License.
  */
 
-package org.ballerinalang.langlib.transaction;
+package io.ballerina.transaction.internal;
 
-import org.ballerinalang.jvm.scheduling.Strand;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.ReturnType;
@@ -26,15 +25,15 @@ import org.ballerinalang.natives.annotations.ReturnType;
 import java.io.IOException;
 import java.net.ServerSocket;
 
-import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_VERSION;
+import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_INTERNAL_VERSION;
 
 /**
  * Extern function transaction:getAvailablePort.
  *
- * @since 2.0.0-preview1
+ * @since Swan Lake
  */
 @BallerinaFunction(
-        orgName = "ballerina", packageName = "lang.transaction", version = TRANSACTION_VERSION,
+        orgName = "ballerina", packageName = "transaction-internal", version = TRANSACTION_INTERNAL_VERSION,
         functionName = "getAvailablePort",
         args = {},
         returnType = {@ReturnType(type = TypeKind.INT)},
@@ -42,7 +41,7 @@ import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_VERSION;
 )
 public class GetAvailablePort {
 
-    public static long getAvailablePort(Strand strand) {
+    public static long getAvailablePort() {
         ServerSocket socket = null;
         try {
             socket = new ServerSocket(0);

@@ -16,35 +16,36 @@
  * under the License.
  */
 
-package org.ballerinalang.langlib.transaction;
+package io.ballerina.transaction.internal;;
 
 import org.ballerinalang.jvm.api.values.BString;
-import org.ballerinalang.jvm.scheduling.Strand;
-import org.ballerinalang.jvm.transactions.TransactionLocalContext;
+import org.ballerinalang.jvm.transactions.TransactionResourceManager;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.ReturnType;
 
-import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_VERSION;
+import static org.ballerinalang.util.BLangCompilerConstants.TRANSACTION_INTERNAL_VERSION;
 
 /**
- * Extern function transaction:rollbackTransaction.
+ * Extern function transaction:prepareResourceManagers.
  *
- * @since 2.0.0-preview1
+ * @since Swan Lake
  */
 @BallerinaFunction(
-        orgName = "ballerina", packageName = "lang.transaction", version = TRANSACTION_VERSION,
-        functionName = "rollbackTransaction",
-        args = {@Argument(name = "transactionBlockId", type = TypeKind.STRING),
-                @Argument(name = "err", type = TypeKind.UNION)},
-        returnType = {@ReturnType(type = TypeKind.NIL)},
+        orgName = "ballerina", packageName = "transaction-internal", version = TRANSACTION_INTERNAL_VERSION,
+        functionName = "prepareResourceManagers",
+        args = {
+                @Argument(name = "transactionId", type = TypeKind.STRING),
+                @Argument(name = "transactionBlockId", type = TypeKind.STRING)
+        },
+        returnType = {@ReturnType(type = TypeKind.BOOLEAN)},
         isPublic = true
 )
-public class RollbackTransaction {
+public class PrepareResourceManagers {
 
-    public static void rollbackTransaction(Strand strand, BString transactionBlockId, Object err) {
-        TransactionLocalContext transactionLocalContext = strand.currentTrxContext;
-        transactionLocalContext.rollbackTransaction(strand, transactionBlockId.getValue(), err);
+    public static boolean prepareResourceManagers(BString transactionId, BString transactionBlockId) {
+        return TransactionResourceManager.getInstance().prepare(transactionId.getValue(),
+                transactionBlockId.getValue());
     }
 }
