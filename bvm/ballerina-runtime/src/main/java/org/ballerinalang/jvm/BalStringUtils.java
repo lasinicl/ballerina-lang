@@ -254,22 +254,19 @@ public class BalStringUtils {
             part.append(strChar);
             if (strChar == '\"') {
                 quotesCount++;
-            }
-            if (strChar == '[' && quotesCount % 2 == 0) {
+            } else if (strChar == '[' && quotesCount % 2 == 0) {
                 balance++;
             } else if (strChar == '{' && quotesCount % 2 == 0) {
                 balance++;
             } else if (strChar == '(' && quotesCount % 2 == 0) {
                 balance++;
-            }
-            else if (strChar == ']' && quotesCount % 2 == 0) {
+            } else if (strChar == ']' && quotesCount % 2 == 0) {
                 balance--;
             } else if (strChar == '}' && quotesCount % 2 == 0) {
                 balance--;
             } else if (strChar == ')' && quotesCount % 2 == 0) {
                 balance--;
-            }
-            else if (strChar == ',' && balance == 0 && quotesCount % 2 == 0) {
+            } else if (strChar == ',' && balance == 0 && quotesCount % 2 == 0) {
                 list.add(part.substring(0, part.length() - 1));
                 part = new StringBuilder();
             }
