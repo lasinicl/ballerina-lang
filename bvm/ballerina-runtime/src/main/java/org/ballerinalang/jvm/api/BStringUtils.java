@@ -16,6 +16,9 @@
  */
 package org.ballerinalang.jvm.api;
 
+import org.apache.axiom.om.OMAbstractFactory;
+import org.apache.axiom.om.OMFactory;
+import org.ballerinalang.jvm.BalStringUtils;
 import org.ballerinalang.jvm.CycleUtils;
 import org.ballerinalang.jvm.TypeChecker;
 import org.ballerinalang.jvm.api.values.BLink;
@@ -57,6 +60,7 @@ import static org.ballerinalang.jvm.util.exceptions.BallerinaErrorReasons.getMod
 public class BStringUtils {
 
     private static final String STR_CYCLE = "...";
+    private static final OMFactory OM_FACTORY = OMAbstractFactory.getOMFactory();
 
     /**
      * Check whether two strings are equal in value.
@@ -320,6 +324,51 @@ public class BStringUtils {
 
         RefValue refValue = (RefValue) value;
         return refValue.expressionStringValue(parent);
+    }
+
+    public static Object parseExpressionStringValue(String value) {
+        String exprValue = value.trim();
+        int endIndex = exprValue.length() - 1;
+        if (exprValue.equals("()")) {
+            return null;
+        }
+        if (exprValue.startsWith("\"") && exprValue.endsWith("\"")) {
+            return BStringUtils.fromString(exprValue.substring(1, endIndex));
+        }
+        if (exprValue.matches("[+-]?[0-9][0-9]*")) {
+            return Long.parseLong(exprValue);
+        }
+        if (exprValue.equals("float:Infinity") || exprValue.equals("float:NaN")) {
+            return Double.parseDouble(exprValue.substring(6));
+        }
+        if (exprValue.matches("[+-]?[0-9]+([.][0-9]+)?([Ee][+-]?[0-9]+)?")) {
+            return Double.parseDouble(exprValue);
+        }
+        if (exprValue.matches("[+-]?[0-9]+(.[0-9]+)?([Ee][+-]?[0-9]+)?[d]")) {
+            return new DecimalValue(exprValue.substring(0, endIndex));
+        }
+        if (exprValue.equals("true") || exprValue.equals("false")) {
+            return Boolean.parseBoolean(exprValue);
+        }
+        if (exprValue.startsWith("[") && exprValue.endsWith("]")) {
+            return BalStringUtils.parseArrayExpressionStringValue(exprValue);
+        }
+        if (exprValue.startsWith("{") && exprValue.endsWith("}")) {
+            return BalStringUtils.parseMapExpressionStringValue(exprValue);
+        }
+        if (exprValue.startsWith("table key")) {
+            return BalStringUtils.parseTableExpressionStringValue(exprValue);
+        }
+        if (exprValue.startsWith("xml")) {
+            String xml = exprValue.substring(exprValue.indexOf('`') + 1,
+                    exprValue.lastIndexOf('`')).trim();
+            return BalStringUtils.parseXmlExpressionStringValue(xml);
+        }
+        if (!exprValue.startsWith("error") && !exprValue.startsWith("object") && !exprValue.startsWith("...")) {
+            return BalStringUtils.parseTupleExpressionStringValue(exprValue);
+        }
+        return BErrorCreator.createError(fromString("Cannot parse Ballerina expression syntax"),
+                fromString("fromBalString supported only for Ballerina expression syntax of anydata value"));
     }
 
     /**
