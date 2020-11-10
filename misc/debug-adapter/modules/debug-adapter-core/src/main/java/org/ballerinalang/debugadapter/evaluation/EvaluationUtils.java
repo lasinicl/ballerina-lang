@@ -43,11 +43,13 @@ import static org.ballerinalang.debugadapter.variable.VariableUtils.removeRedund
 public class EvaluationUtils {
 
     // Helper classes
-    public static final String B_TYPE_CHECKER_CLASS = "io.ballerina.runtime.TypeChecker";
-    public static final String B_STRING_UTILS_CLASS = "io.ballerina.runtime.api.StringUtils";
-    public static final String B_XML_FACTORY_CLASS = "io.ballerina.runtime.XMLFactory";
-    public static final String B_DECIMAL_VALUE_CLASS = "io.ballerina.runtime.values.DecimalValue";
-    public static final String B_XML_VALUE_CLASS = "io.ballerina.runtime.values.XMLValue";
+    public static final String B_TYPE_CHECKER_CLASS = "io.ballerina.runtime.internal.TypeChecker";
+    public static final String B_STRING_UTILS_CLASS = "io.ballerina.runtime.api.utils.StringUtils";
+    public static final String B_XML_FACTORY_CLASS = "io.ballerina.runtime.internal.XmlFactory";
+    public static final String B_DECIMAL_VALUE_CLASS = "io.ballerina.runtime.internal.values.DecimalValue";
+    public static final String B_XML_VALUE_CLASS = "io.ballerina.runtime.internal.values.XmlValue";
+    public static final String B_STRING_CLASS = "io.ballerina.runtime.api.values.BString";
+    public static final String FROM_STRING_CLASS = "org.ballerinalang.langlib.xml.FromString";
     private static final String B_LINK_CLASS = "io.ballerina.runtime.api.values.BLink";
     public static final String JAVA_OBJECT_CLASS = "java.lang.Object";
     private static final String JAVA_BOOLEAN_CLASS = "java.lang.Boolean";
@@ -64,6 +66,7 @@ public class EvaluationUtils {
     public static final String DECIMAL_LT_EQUALS = "checkDecimalLessThanOrEqual";
     public static final String DECIMAL_GT_EQUALS = "checkDecimalGreaterThanOrEqual";
     public static final String XML_CONCAT_METHOD = "concatenate";
+    public static final String XML_FROM_STRING_METHOD = "fromString";
     private static final String B_STRING_CONCAT_METHOD = "concat";
     private static final String FROM_STRING_METHOD = "fromString";
     private static final String FOR_NAME_METHOD = "forName";

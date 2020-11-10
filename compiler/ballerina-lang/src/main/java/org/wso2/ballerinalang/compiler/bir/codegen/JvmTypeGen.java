@@ -71,7 +71,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import static io.ballerina.runtime.IdentifierUtils.decodeIdentifier;
+import static io.ballerina.runtime.internal.IdentifierUtils.decodeIdentifier;
 import static org.objectweb.asm.Opcodes.AASTORE;
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
@@ -198,7 +198,7 @@ import static org.wso2.ballerinalang.compiler.bir.codegen.JvmValueGen.getTypeVal
  *
  * @since 1.2.0
  */
-class JvmTypeGen {
+public class JvmTypeGen {
 
     private static ResolvedTypeBuilder typeBuilder = new ResolvedTypeBuilder();
 
@@ -1070,7 +1070,7 @@ class JvmTypeGen {
      * @param mv    method visitor
      * @param bType type to load
      */
-    static void loadType(MethodVisitor mv, BType bType) {
+    public static void loadType(MethodVisitor mv, BType bType) {
         String typeFieldName = "";
         if (bType == null || bType.tag == TypeTags.NIL) {
             typeFieldName = "TYPE_NULL";

@@ -16,6 +16,7 @@
  */
 package org.wso2.ballerinalang.compiler.desugar;
 
+import io.ballerina.tools.diagnostics.Location;
 import org.ballerinalang.model.TreeBuilder;
 import org.ballerinalang.model.tree.OperatorKind;
 import org.ballerinalang.model.types.TypeKind;
@@ -60,13 +61,12 @@ import org.wso2.ballerinalang.compiler.tree.types.BLangValueType;
 import org.wso2.ballerinalang.compiler.util.CompilerContext;
 import org.wso2.ballerinalang.compiler.util.Name;
 import org.wso2.ballerinalang.compiler.util.Names;
-import org.wso2.ballerinalang.compiler.util.diagnotic.DiagnosticPos;
 import org.wso2.ballerinalang.util.Lists;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static io.ballerina.runtime.util.BLangConstants.UNDERSCORE;
+import static io.ballerina.runtime.api.constants.RuntimeConstants.UNDERSCORE;
 import static org.ballerinalang.model.symbols.SymbolOrigin.VIRTUAL;
 import static org.wso2.ballerinalang.compiler.util.Names.CLEAN_UP_TRANSACTION;
 import static org.wso2.ballerinalang.compiler.util.Names.CURRENT_TRANSACTION_INFO;
@@ -101,7 +101,6 @@ public class TransactionDesugar extends BLangNodeVisitor {
 
     private String uniqueId;
     private int transactionBlockCount;
-    private boolean transactionInternalModuleIncluded = false;
 
     private BLangStatementExpression result;
     private boolean onFailHandled;
@@ -146,7 +145,7 @@ public class TransactionDesugar extends BLangNodeVisitor {
     public void visit(BLangTransaction transactionNode) {
         // Transaction statement desugar implementation code.
 
-        DiagnosticPos pos = transactionNode.pos;
+        Location pos = transactionNode.pos;
         BLangBlockStmt transactionBlockStmt = desugarTransactionBody(transactionNode, env, false, pos);
         BLangSimpleVarRef resultRef = ASTBuilderUtil.createVariableRef(transactionNode.pos, transactionError);
         if (transactionNode.statementBlockReturns) {
@@ -161,7 +160,7 @@ public class TransactionDesugar extends BLangNodeVisitor {
     }
 
     private BLangBlockStmt desugarTransactionBody(BLangTransaction transactionNode, SymbolEnv env, boolean shouldRetry,
-                                                  DiagnosticPos pos) {
+                                                  Location pos) {
         BLangBlockStmt transactionBlockStmt = ASTBuilderUtil.createBlockStmt(pos);
 
         // Create transaction block ID variable
@@ -295,7 +294,7 @@ public class TransactionDesugar extends BLangNodeVisitor {
         return transactionBlockStmt;
     }
 
-    private BLangAssignment createPrevAttemptInfoInvocation(DiagnosticPos pos) {
+    private BLangAssignment createPrevAttemptInfoInvocation(Location pos) {
         BInvokableSymbol transactionInfoInvokableSymbol =
                 (BInvokableSymbol) getTransactionLibInvokableSymbol(CURRENT_TRANSACTION_INFO);
         BLangInvocation infoInvocation =
@@ -305,33 +304,28 @@ public class TransactionDesugar extends BLangNodeVisitor {
         return ASTBuilderUtil.createAssignmentStmt(pos, prevAttemptInfoRef, infoInvocation);
     }
 
-    private BLangInvocation createStartTransactionInvocation(DiagnosticPos pos,
-            BLangLiteral transactionBlockIDLiteral, BLangSimpleVarRef prevAttempt) {
-        // Include transaction-internal module as an import if not included
-        if (!transactionInternalModuleIncluded) {
-            desugar.addTransactionInternalModuleImport();
-            transactionInternalModuleIncluded = true;
-        }
-
+    private BLangInvocation createStartTransactionInvocation(Location location,
+                                                             BLangLiteral transactionBlockIDLiteral,
+                                                             BLangSimpleVarRef prevAttempt) {
         BInvokableSymbol startTransactionInvokableSymbol =
-                (BInvokableSymbol) getInternalTransactionModuleInvokableSymbol(START_TRANSACTION);
+                (BInvokableSymbol) getTransactionLibInvokableSymbol(START_TRANSACTION);
         List<BLangExpression> args = new ArrayList<>();
         args.add(transactionBlockIDLiteral);
         args.add(prevAttempt);
         BLangInvocation startTransactionInvocation = ASTBuilderUtil.
-                createInvocationExprForMethod(pos, startTransactionInvokableSymbol, args, symResolver);
+                createInvocationExprForMethod(location, startTransactionInvokableSymbol, args, symResolver);
         startTransactionInvocation.argExprs = args;
         return startTransactionInvocation;
     }
 
-    private BLangSimpleVariableDef createPrevAttemptInfoVarDef(SymbolEnv env, DiagnosticPos pos) {
+    private BLangSimpleVariableDef createPrevAttemptInfoVarDef(SymbolEnv env, Location pos) {
         BLangLiteral nilLiteral = ASTBuilderUtil.createLiteral(pos, symTable.nilType, Names.NIL_VALUE);
         BLangSimpleVariable prevAttemptVariable = createPrevAttemptVariable(env, pos);
         prevAttemptVariable.expr = nilLiteral;
         return ASTBuilderUtil.createVariableDef(pos, prevAttemptVariable);
     }
 
-    private BLangSimpleVariable createPrevAttemptVariable(SymbolEnv env, DiagnosticPos pos) {
+    private BLangSimpleVariable createPrevAttemptVariable(SymbolEnv env, Location pos) {
         // transactions:Info? prevAttempt = ();
         BSymbol infoRecordSymbol = symResolver.
                 lookupSymbolInMainSpace(symTable.pkgEnvMap.get(symTable.langTransactionModuleSymbol),
@@ -348,7 +342,7 @@ public class TransactionDesugar extends BLangNodeVisitor {
     //    if ((result is error) && !(result is TransactionError)) {
     //        rollback result;
     //    }
-    private void createRollbackIfFailed(DiagnosticPos pos, BLangBlockStmt transactionBlockStmt,
+    private void createRollbackIfFailed(Location pos, BLangBlockStmt transactionBlockStmt,
                                         BSymbol trxFuncResultSymbol) {
         BLangIf rollbackCheck = ASTBuilderUtil.createIfStmt(pos, transactionBlockStmt);
         BConstructorSymbol transactionErrorSymbol = (BConstructorSymbol) symTable.langTransactionModuleSymbol
@@ -376,10 +370,10 @@ public class TransactionDesugar extends BLangNodeVisitor {
         rollbackCheck.body.stmts.add(desugar.rewrite(rollbackStmt, env));
     }
 
-    private BLangInvocation createCleanupTrxStmt(DiagnosticPos pos) {
+    private BLangInvocation createCleanupTrxStmt(Location pos) {
         List<BLangExpression> args;
         BInvokableSymbol cleanupTrxInvokableSymbol =
-                (BInvokableSymbol) getInternalTransactionModuleInvokableSymbol(CLEAN_UP_TRANSACTION);
+                (BInvokableSymbol) getTransactionLibInvokableSymbol(CLEAN_UP_TRANSACTION);
         args = new ArrayList<>();
         args.add(transactionBlockID);
         BLangInvocation cleanupTrxInvocation = ASTBuilderUtil.
@@ -390,12 +384,12 @@ public class TransactionDesugar extends BLangNodeVisitor {
 
     BLangStatementExpression desugar(BLangRollback rollbackNode) {
         // Rollback desugar implementation
-        DiagnosticPos pos = rollbackNode.pos;
+        Location pos = rollbackNode.pos;
         BLangBlockStmt rollbackBlockStmt = ASTBuilderUtil.createBlockStmt(pos);
 
         // rollbackTransaction(transactionBlockID);
         BInvokableSymbol rollbackTransactionInvokableSymbol =
-                (BInvokableSymbol) getInternalTransactionModuleInvokableSymbol(ROLLBACK_TRANSACTION);
+                (BInvokableSymbol) getTransactionLibInvokableSymbol(ROLLBACK_TRANSACTION);
         List<BLangExpression> args = new ArrayList<>();
         args.add(transactionBlockID);
         if (rollbackNode.expr != null) {
@@ -421,7 +415,7 @@ public class TransactionDesugar extends BLangNodeVisitor {
     }
 
     BLangStatementExpression desugar(BLangCommitExpr commitExpr, SymbolEnv env) {
-        DiagnosticPos pos = commitExpr.pos;
+        Location pos = commitExpr.pos;
         BLangBlockStmt commitBlockStatement = ASTBuilderUtil.createBlockStmt(pos);
 
         // Create temp output variable
@@ -433,7 +427,7 @@ public class TransactionDesugar extends BLangNodeVisitor {
         // Clear failures
         // boolean isFailed = getAndClearFailure();
         BInvokableSymbol transactionCleanerInvokableSymbol =
-                (BInvokableSymbol) getInternalTransactionModuleInvokableSymbol(GET_AND_CLEAR_FAILURE_TRANSACTION);
+                (BInvokableSymbol) getTransactionLibInvokableSymbol(GET_AND_CLEAR_FAILURE_TRANSACTION);
         BLangInvocation transactionCleanerInvocation = ASTBuilderUtil.
                 createInvocationExprForMethod(pos, transactionCleanerInvokableSymbol, new ArrayList<>(), symResolver);
         transactionCleanerInvocation.argExprs = new ArrayList<>();
@@ -451,7 +445,7 @@ public class TransactionDesugar extends BLangNodeVisitor {
         // Commit expr desugar implementation
         //string|error commitResult = endTransaction(transactionID, transactionBlockID);
         BInvokableSymbol commitTransactionInvokableSymbol =
-                (BInvokableSymbol) getInternalTransactionModuleInvokableSymbol(END_TRANSACTION);
+                (BInvokableSymbol) getTransactionLibInvokableSymbol(END_TRANSACTION);
         List<BLangExpression> args = new ArrayList<>();
         args.add(transactionID);
         args.add(transactionBlockID);
@@ -534,7 +528,7 @@ public class TransactionDesugar extends BLangNodeVisitor {
         return stmtExpr;
     }
 
-    private BLangSimpleVariableDef createCommitResultVarDef(SymbolEnv env, DiagnosticPos pos) {
+    private BLangSimpleVariableDef createCommitResultVarDef(SymbolEnv env, Location pos) {
         BLangExpression nilLiteral = ASTBuilderUtil.createLiteral(pos, symTable.nilType, Names.NIL_VALUE);
         BVarSymbol outputVarSymbol = new BVarSymbol(0, new Name("$outputVar$"),
                 env.scope.owner.pkgID, symTable.errorOrNilType, env.scope.owner, pos, VIRTUAL);
@@ -579,15 +573,5 @@ public class TransactionDesugar extends BLangNodeVisitor {
      */
     public BSymbol getTransactionLibInvokableSymbol(Name name) {
         return symTable.langTransactionModuleSymbol.scope.lookup(name).symbol;
-    }
-
-    /**
-     * Load and return symbol for given name in transaction internal module.
-     *
-     * @param name of the symbol.
-     * @return symbol for the function.
-     */
-    public BSymbol getInternalTransactionModuleInvokableSymbol(Name name) {
-        return symTable.internalTransactionModuleSymbol.scope.lookup(name).symbol;
     }
 }

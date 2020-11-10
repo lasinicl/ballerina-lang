@@ -17,10 +17,10 @@
 package org.ballerinalang.test.util;
 
 import io.ballerina.runtime.api.PredefinedTypes;
-import io.ballerina.runtime.scheduling.Scheduler;
-import io.ballerina.runtime.scheduling.Strand;
-import io.ballerina.runtime.values.ErrorValue;
-import io.ballerina.runtime.values.FutureValue;
+import io.ballerina.runtime.internal.scheduling.Scheduler;
+import io.ballerina.runtime.internal.scheduling.Strand;
+import io.ballerina.runtime.internal.values.ErrorValue;
+import io.ballerina.runtime.internal.values.FutureValue;
 import org.ballerinalang.compiler.CompilerPhase;
 import org.ballerinalang.core.util.exceptions.BLangRuntimeException;
 import org.ballerinalang.core.util.exceptions.BallerinaException;
@@ -205,10 +205,7 @@ public class BCompileUtil {
             scheduler.start();
             final Throwable t = out.panic;
             if (t != null) {
-                if (t instanceof io.ballerina.runtime.util.exceptions.BLangRuntimeException) {
-                    throw new BLangRuntimeException(t.getMessage());
-                }
-                if (t instanceof io.ballerina.runtime.util.exceptions.BallerinaConnectorException) {
+                if (t instanceof io.ballerina.runtime.internal.util.exceptions.BLangRuntimeException) {
                     throw new BLangRuntimeException(t.getMessage());
                 }
                 if (t instanceof ErrorValue) {
@@ -452,6 +449,34 @@ public class BCompileUtil {
         options.put(EXPERIMENTAL_FEATURES_ENABLED, Boolean.TRUE.toString());
         options.put(OFFLINE, "true");
         context.put(SourceDirectory.class, sourceDirectory);
+
+        // compile
+        Compiler compiler = Compiler.getInstance(context);
+        BLangPackage packageNode = compiler.compile(packageName);
+        CompileResult comResult = new CompileResult(context, packageNode);
+        return comResult;
+    }
+
+    /**
+     * This method is intended for use in cases where you need control over both the compiler context and the compiler
+     * phase. This will not create an executable Ballerina program.
+     *
+     * @param sourceFilePath Relative path to the test source .bal file
+     * @param context        A CompilerContext instance
+     * @param compilerPhase  The phase up to which the compilation will be done
+     * @return A CompileResult instance
+     */
+    public static CompileResult compile(String sourceFilePath, CompilerContext context, CompilerPhase compilerPhase) {
+        Path sourcePath = Paths.get(sourceFilePath);
+        String packageName = sourcePath.getFileName().toString();
+        Path sourceRoot = resourceDir.resolve(sourcePath.getParent());
+
+        CompilerOptions options = CompilerOptions.getInstance(context);
+        options.put(PROJECT_DIR, sourceRoot.toString());
+        options.put(COMPILER_PHASE, compilerPhase.toString());
+        options.put(PRESERVE_WHITESPACE, "false");
+        options.put(EXPERIMENTAL_FEATURES_ENABLED, Boolean.TRUE.toString());
+        options.put(OFFLINE, "true");
 
         // compile
         Compiler compiler = Compiler.getInstance(context);
@@ -740,7 +765,7 @@ public class BCompileUtil {
     }
 
     private static String calcFileNameForJar(BLangPackage bLangPackage) {
-        PackageID pkgID = bLangPackage.pos.src.pkgID;
+        PackageID pkgID = bLangPackage.packageID;
         Name sourceFileName = pkgID.sourceFileName;
         if (sourceFileName != null) {
             return sourceFileName.value.replaceAll("\\.bal$", "");
